@@ -1,5 +1,27 @@
 module PDESolverCommon
 
 # package code goes here
+export AbstractEquation
+export AbstractMesh
+export Boundary
+export Interface
+
+abstract AbstractEquation{T}
+abstract AbstractMesh
+
+
+
+immutable Boundary
+    element::UInt64
+    face::UInt8
+end
+
+immutable Interface
+  elementL::UInt64
+  elementR::UInt64
+  faceL::UInt8
+  faceR::UInt8
+end
+
 
 end # module
