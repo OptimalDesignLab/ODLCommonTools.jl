@@ -1,5 +1,7 @@
 module PDESolverCommon
 
+import Base.show
+
 # package code goes here
 export AbstractEquation
 export AbstractMesh
@@ -28,5 +30,15 @@ end
 
 
 abstract BCType  # functor boundary condition abstract type
+
+function show(io::IO, object::Boundary)
+  println(io, "Boundary element, face = ", object.element, " , ", object.face)
+end
+
+function show(io::IO, obj::Interface)
+  println(io, "Interface elementL, elementR, faceL, faceR = ", obj.elementL, ", ", obj.elementR, ", ", obj.faceL, ", ", obj.faceR)
+
+ end
+
 
 end # module
