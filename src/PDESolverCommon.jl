@@ -1,4 +1,5 @@
 module PDESolverCommon
+include("misc.jl")
 
 import Base.show
 
