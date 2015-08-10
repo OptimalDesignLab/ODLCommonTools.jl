@@ -8,7 +8,6 @@ export AbstractMesh
 export Boundary
 export Interface
 export BCType
-
 abstract AbstractSolutionData{T3}
 abstract AbstractMesh{T1}
 
@@ -70,5 +69,6 @@ function show(io::IO, obj::Interface)
   print(io, "Interface elementL, elementR, faceL, faceR = ", obj.elementL, ", ",
         obj.elementR, ", ", obj.faceL, ", ", obj.faceR)
 end
+
 
 end # module

@@ -25,4 +25,21 @@ facts("--- Testing misc.jl ---") do
 
 
 
+  q = FIFOQueue{Int}()
+
+  push!(q, 1)
+  push!(q, 2)
+  push!(q, 3)
+
+  @fact length(q) => 3
+  val = pop!(q)
+  @fact val => 3
+  @fact isempty(q) => false
+  @fact front(q) => 2
+
+  resize!(q, 10)
+  @fact length(q.s) => 10
+
+  empty!(q)
+  @fact isempty(q) => true
 end

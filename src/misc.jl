@@ -1,6 +1,6 @@
 using ArrayViews
 
-export rmfile, printbacktrace, smallmatvec!, checkZeroRows, checkZeroColumns, checkIdenticalColumns
+export rmfile, printbacktrace, smallmatvec!, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
 
 @doc """
  ### Tools rmfile
@@ -149,3 +149,151 @@ function findLarge{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
 
   return cnt
 end
+
+function checkSparseColumns{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, sparsity_bnds::AbstractArray{T2, 2},  tol::FloatingPoint)
+# checks that all entries outside the range specified by sparsity_bnds
+# are zero
+# returns the number of columns with out of bounds entries and an array of
+# bools specifying which ones
+
+(m,n) = size(A)
+out_of_bounds = zeros(Bool, n)
+
+for i=1:n  # loop over columns
+  min = sparsity_bnds[1, i]
+  max = sparsity_bnds[2, i]
+
+  for j=1:(min -1)
+    entry_j = A[j, i]
+    if abs(entry_j) > tol
+      out_of_bounds[i] = true
+      println("entry ", j, ", ", i, " is non zero")
+      break
+    end
+  end
+
+#  if fail_flag
+#    continue  # skip to next column
+#  end
+
+  for j=(max+1):m
+    entry_j = A[j, i]
+    if abs(entry_j) > tol
+      out_of_bounds[i] = true
+      println("entry ", j, ", ", i, " is non zero")
+      break
+    end
+  end
+
+end # end loop over columns
+
+cnt = sum(out_of_bounds)
+
+return cnt, out_of_bounds
+
+end
+
+
+export FIFOQueue, front
+import Base.push!, Base.pop!, Base.length, Base.isempty, Base.resize!, Base.empty!
+type FIFOQueue{T}
+  s::Array{T, 1}  # array of values
+  pos::Int  # current head of que (points to most recently inserted elements)
+  fac::Float64  # factor by which to expand que when it runs out of space
+
+  function FIFOQueue(; size_hint=0, fac=1.4)
+    # size_hint = initial size of array
+    arr = Array(T, size_hint)
+    pos = 0
+   return new(arr, pos, fac)
+  end
+
+end
+
+function push!{T}(que::FIFOQueue{T}, val::T)
+  que.pos += 1
+  # check size
+  println("que.pos = ", que.pos)
+  println("que length = ", length(que.s))
+  len = length(que.s)
+  if que.pos > len
+    println("resizing que")
+    new_size = convert(Int, max(que.pos, floor(len*que.fac)))
+    println("new_size = ", new_size)
+    resize!(que.s, new_size)
+  end
+
+  println("que.pos = ", que.pos)
+  # do insertion
+  que.s[que.pos] = val
+
+  return nothing
+end
+
+function pop!{T}(que::FIFOQueue{T})
+  pos = que.pos
+  val = que.s[pos]
+  que.pos -= 1
+
+  return val
+end
+
+function pop!{T}(que::FIFOQueue{T}, vals::AbstractArray{T, 1})
+# remove last n elements, where n = length(vals)
+
+  n = length(vals)
+  for i=1:n
+    vals[i] = pop!(que)
+  end
+
+  return nothing
+end
+
+# function front retrieve element without removing
+function front{T}(que::FIFOQueue{T})
+  return que.s[que.pos]
+end
+
+
+# function popN!  # remove multiple elements
+
+
+
+function length(que::FIFOQueue)
+  return que.pos
+end
+
+# for general collection compatability
+endof(que::FIFOQueue) = length(que)
+
+
+function isempty(que::FIFOQueue)
+  return que.pos == 0
+end
+
+function empty!(que::FIFOQueue)
+  n = length(que)
+
+  for i=1:n
+    pop!(que)
+  end
+
+  return nothing
+end
+
+function resize!(que::FIFOQueue, new_size)
+  # change size of que, if doing so will not remove elements
+  if new_size > que.pos
+    resize!(que.s, new_size)
+  else
+    println(STDERR, "Warning: not resizing que")
+  end
+
+  return nothing
+end
+
+
+
+
+
+
