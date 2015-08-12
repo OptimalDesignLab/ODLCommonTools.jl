@@ -1,6 +1,6 @@
 module PDESolverCommon
 include("misc.jl")
-
+include("sparse.jl")
 import Base.show
 
 export AbstractSolutionData
@@ -27,7 +27,7 @@ To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
 
 """->
 immutable Boundary
-    element::UInt64
+    element::UInt32
     face::UInt8
 end
 
@@ -52,8 +52,8 @@ face 1 of element 2 and face 3 of element 5.  This can be indicated as
 
 """->
 immutable Interface
-  elementL::UInt64
-  elementR::UInt64
+  elementL::UInt32
+  elementR::UInt32
   faceL::UInt8
   faceR::UInt8
   nodemap::Array{UInt8, 1}

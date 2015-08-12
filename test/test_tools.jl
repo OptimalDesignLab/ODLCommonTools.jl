@@ -42,4 +42,31 @@ facts("--- Testing misc.jl ---") do
 
   empty!(q)
   @fact isempty(q) => true
+
+
+  mat_dense = [1 3 0 0; 2 4 6 0; 0 5 7 0; 0 0 0 8]
+  sparse_bnds = [1 1 2 4; 2 3 3 4]
+
+  mat = SparseMatrixCSC(sparse_bnds, Float64)
+  @time mat = SparseMatrixCSC(sparse_bnds, Float64)
+  mat2 = sparse(mat_dense)
+
+  @fact mat.colptr => mat2.colptr
+  @fact mat.rowval => mat2.rowval
+
+  @fact mat2[1,1] => 1
+  @fact mat2[2,1] => 2
+  @fact mat2[1,2] => 3
+  @fact mat2[2,2] => 4
+  @fact mat2[3,2] => 5
+  @fact mat2[2,3] => 6
+  @fact mat2[3,3] => 7
+  @fact mat2[4,4] => 8
+
+  mat2[3,2] = 9
+  @fact mat2[3,2] => 9
+
+  mat2[4,4] = 10
+  @fact mat2[4,4] => 10
+
 end
