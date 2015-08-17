@@ -11,6 +11,8 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   # the type of val is used for the values
   # the value of val itself is never used
 
+  println("creating SparseMatrixCSC")
+
   (tmp, n) = size(sparse_bnds)
   num_nz = 0  # accumulate number of non zero entries
 
@@ -51,6 +53,7 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
 
   @assert pos == num_nz + 1  # check for sanity
 
+  println("average bandwidth = ", pos/m)
   return SparseMatrixCSC(m, n, colptr, rowval, nzval)
 end
 
@@ -108,6 +111,7 @@ function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
 
   if i < row_min || i > row_max
     println(STDERR, "Warning: Cannot change sparsity pattern of this matrix")
+    println(STDERR, "    i = ", i, ", j = ", j, " value = ", v)
     return A
   end
 #=  
@@ -133,6 +137,10 @@ function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
   return A
 end
 
-
+import Base.fill!
+function fill!(A::SparseMatrixCSC, val)
+  fill!(A.nzval, val)
+  return nothing
+end
 
   

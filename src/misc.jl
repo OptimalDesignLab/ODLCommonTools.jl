@@ -194,6 +194,54 @@ return cnt, out_of_bounds
 end
 
 
+function checkSparseRows{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, sparsity_bnds::AbstractArray{T2, 2},  tol::FloatingPoint)
+# checks that all entries outside the range specified by sparsity_bnds
+# are zero
+# returns the number of rows with out of bounds entries and an array of
+# bools specifying which ones
+
+(m,n) = size(A)
+out_of_bounds = zeros(Bool, m)
+
+for i=1:m  # loop over columns
+  min = sparsity_bnds[1, i]
+  max = sparsity_bnds[2, i]
+
+  for j=1:(min -1)
+    entry_j = A[i, j]
+    if abs(entry_j) > tol
+      out_of_bounds[i] = true
+      println("entry ", i, ", ", j, " is non zero")
+      break
+    end
+  end
+
+#  if fail_flag
+#    continue  # skip to next column
+#  end
+
+  for j=(max+1):n
+    entry_j = A[i, j]
+    if abs(entry_j) > tol
+      out_of_bounds[i] = true
+      println("entry ", i, ", ", j, " is non zero")
+      break
+    end
+  end
+
+end # end loop over columns
+
+cnt = sum(out_of_bounds)
+
+return cnt, out_of_bounds
+
+end
+
+
+
+
+
+
 export FIFOQueue, front
 import Base.push!, Base.pop!, Base.length, Base.isempty, Base.resize!, Base.empty!
 type FIFOQueue{T}
