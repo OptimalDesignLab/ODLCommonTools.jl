@@ -10,6 +10,24 @@ facts("--- Testing misc.jl ---") do
 
   @fact b => roughly(b2, atol=1e-14)
 
+  A = rand(4, 4)
+  x = rand(4, 2)
+  b = A*x
+  b2 = rand(4, 2)
+  smallmatmat!(A, x, b2)
+
+  @fact b => roughly(b2, atol=1e-14)
+
+  A = rand(4, 3)
+  x = rand(3, 2)
+  b = A*x
+  b2 = rand(4, 2)
+  smallmatmat!(A, x, b2)
+
+  @fact b=> roughly(b2, atol=1e-14)
+
+
+
   A = [0.0 0 1; 0 0 0; 1 0 0]
   numz, arr = checkZeroRows(A, eps())
   @fact numz => 1

@@ -17,7 +17,7 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   num_nz = 0  # accumulate number of non zero entries
 
   m = maximum(sparse_bnds)  # get number of rows
-  colptr = Array(Ti, n+1)  # should be Ti
+  colptr = Array(Int64, n+1)  # should be Ti
 
   if sparse_bnds[1,1] != 0
     colptr[1] = 1
@@ -34,7 +34,7 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
     colptr[i] = num_nz + 1
   end
 
-  rowval = zeros(Ti, num_nz)  # should be Ti
+  rowval = zeros(Int64, num_nz)  # should be Ti
   nzval = zeros(Tv, num_nz)
 
   # populate rowvals

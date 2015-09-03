@@ -1,6 +1,6 @@
 using ArrayViews
 
-export rmfile, printbacktrace, smallmatvec!, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
+export rmfile, printbacktrace, smallmatvec!, smallmatmat!, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
 
 @doc """
  ### Tools rmfile
@@ -54,6 +54,34 @@ end
 
   return nothing
 end
+
+function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 2}, b::AbstractArray{T3, 2})
+# multiplies matrix A by matrix x, writing the solution to matrix b
+# both dimensions of A and the final dimension of x are used for looping
+# the array sizes are not checked explicitly
+# this uses the same technique as smallmatvec!, simply multiplying A by the columns
+# of x repeatedly, without making any copies
+(n, p) = size(x)
+(m,n) = size(A)
+
+for k=1:p  # loop over the column vectors of x
+  # overwrite b, first column only
+  for i=1:m
+    b[i, k] = x[1, k]*A[i, 1]
+  end
+
+  for i=2:n  # loop across columns
+    for j=1:m  # loop down columns
+      b[j, k] += A[j,i]*x[i, k]
+    end
+  end
+end
+
+  return nothing
+end
+
+
+
 
 function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
 # checks each row of a matrix for zeros 
@@ -339,7 +367,6 @@ function resize!(que::FIFOQueue, new_size)
 
   return nothing
 end
-
 
 
 

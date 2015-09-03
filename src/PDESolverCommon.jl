@@ -8,6 +8,7 @@ export AbstractMesh
 export Boundary
 export Interface
 export BCType
+export calcNorm
 abstract AbstractSolutionData{T3}
 abstract AbstractMesh{T1}
 
@@ -70,5 +71,17 @@ function show(io::IO, obj::Interface)
         obj.elementR, ", ", obj.faceL, ", ", obj.faceR)
 end
 
+
+function calcNorm(eqn::AbstractSolutionData, res_vec::AbstractArray)
+# calculates the norm of a vector using the mass matrix
+
+  val = 0.0
+  for i=1:length(res_vec)
+    val = real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
+  end
+
+  val = sqrt(val)
+  return val
+end
 
 end # module
