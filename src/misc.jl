@@ -1,6 +1,6 @@
 using ArrayViews
 
-export rmfile, printbacktrace, smallmatvec!, smallmatmat!, smallmatmatT!, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
+export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatmat!, smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
 
 @doc """
  ### Tools rmfile
@@ -39,24 +39,50 @@ function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2}, x::AbstractArray{T2,1}, 
 # multiplication is expressed as linear combination of columns of A
 # optimized for column major format
 # does that matter if all operands fit in cache?
-# when running with boundschecking, the threshold for this being
-# faster than julia's bultlin matvec is a square matrix of m=n~= 50
-# without boundschecking it is ~100
+# faster than Julia's built-in matvec for for square matrices
+# of size 128 or less
 (m,n) = size(A)
+xm = length(x)
+bm = length(b)
+
+@assert n == xm
+@assert m == bm
 
 # overwrite b, first column only
-@simd for i=1:m
-  b[i] = x[1]*A[i, 1]
+  @inbounds begin
+    @simd for i=1:m
+      b[i] = x[1]*A[i, 1]
+    end
+
+    for i=2:n  # loop across columns
+      @simd for j=1:m  # loop down columns
+        b[j] += A[j,i]*x[i]
+      end
+    end
+
+  end  # end begin inbounds
+
+  return b
 end
 
-for i=2:n  # loop across columns
-  @simd for j=1:m  # loop down columns
-    b[j] += A[j,i]*x[i]
-  end
+function smallmatvec{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 1})
+  (m,n) = size(A)
+  T3 = promote_type(T, T2)
+  b = Array(T3, m)
+  smallmatvec!(A, x, b)
 end
 
-  return nothing
+
+function smallmatmat{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
+  (m,n) = size(A)
+  (xn, p) = size(x)
+  T3 = promote_type(T, T2)
+  b = Array(T3, m, p)
+  smallmatmat!(A, x, b)
 end
+
+
+
 
 function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 2}, b::AbstractArray{T3, 2})
 # multiplies matrix A by matrix x, writing the solution to matrix b
@@ -64,57 +90,86 @@ function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 2}
 # the array sizes are not checked explicitly
 # this uses the same technique as smallmatvec!, simply multiplying A by the columns
 # of x repeatedly, without making any copies
-# with boundschecking, the threshoold for this being faster than julia's
-# builtin mat-mat is a matrix of m=n~=14
-# without boundschecking the threshold is m=n~=28
-(n, p) = size(x)
+# Faster than Julia's built-in mat-mat for matrices without m=n~=28
+
 (m,n) = size(A)
+(xn, p) = size(x)
+(bm, bn) = size(b)
 
-for k=1:p  # loop over the column vectors of x
-  # overwrite b, first column only
-  @simd for i=1:m
-    b[i, k] = x[1, k]*A[i, 1]
-  end
+@assert n == xn
+@assert m == bm
+@assert p == bn
+  @inbounds begin
+    for k=1:p  # loop over the column vectors of x
+      # overwrite b, first column only
+      @simd for i=1:m
+        b[i, k] = x[1, k]*A[i, 1]
+      end
 
-  for i=2:n  # loop across columns
-    @simd for j=1:m  # loop down columns
-      b[j, k] += A[j,i]*x[i, k]
+      for i=2:n  # loop across columns
+        @simd for j=1:m  # loop down columns
+          b[j, k] += A[j,i]*x[i, k]
+        end
+      end
     end
-  end
+
+  end  # end being inbounds
+
+  return b
 end
 
-  return nothing
+
+function smallmatmatT{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
+  (m,n) = size(A)
+  (p, xn) = size(x)
+  T3 = promote_type(T, T2)
+  b = Array(T3, n, p)
+  smallmatmatT!(A, x, b)
 end
+
+
 
 function smallmatmatT!{T, T2, T3}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 2}, b::AbstractArray{T3, 2})
 # multiplies A by x.', storing result in b
 # the threshold (compared against a copying transpose of A*(x.') = b
 # is m=n~=18 with bounds checking on
 # without bounds checking, m=n~=24 appears to be the limit
-(p, n) = size(x)
+
+
+(p, xn) = size(x)
 (m,n) = size(A)
+(bm, bn) = size(b)
 
-# overwrite b 
-  
-  for i=1:m
-    a_i = A[i, 1]
-    @simd for j=1:p
-      b[i,j] = a_i*x[j,1]
-    end
-  end
+@assert n == xn
+@assert m == bm
+@assert p == bn
 
-# add to b
-  for j=2:n  # loop across remaining columns of A
-    for i=1:m  # loop down a column
-      a_i = A[i, j]
-    # multiply this entry by row i of x.'
-      @simd for k=1:p
-        b[i,k] += a_i*x[k, j]
+
+
+
+  # overwrite b 
+  @inbounds begin  
+    for i=1:m
+      a_i = A[i, 1]
+      @simd for j=1:p
+        b[i,j] = a_i*x[j,1]
       end
     end
-  end      
 
-  return nothing
+  # add to b
+    for j=2:n  # loop across remaining columns of A
+      for i=1:m  # loop down a column
+        a_i = A[i, j]
+      # multiply this entry by row i of x.'
+        @simd for k=1:p
+          b[i,k] += a_i*x[k, j]
+        end
+      end
+    end      
+
+  end  # end begin inbounds
+
+  return b
 end
 
 
