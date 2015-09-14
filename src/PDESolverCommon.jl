@@ -77,7 +77,7 @@ function calcNorm(eqn::AbstractSolutionData, res_vec::AbstractArray)
 
   val = 0.0
   for i=1:length(res_vec)
-    val = real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
+    val += real(res_vec[i])*eqn.Minv[i]*real(res_vec[i])   # res^T M resa
   end
 
   val = sqrt(val)
