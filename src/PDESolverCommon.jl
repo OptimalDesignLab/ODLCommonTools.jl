@@ -72,12 +72,14 @@ function show(io::IO, obj::Interface)
 end
 
 
-function calcNorm(eqn::AbstractSolutionData, res_vec::AbstractArray)
+function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T})
 # calculates the norm of a vector using the mass matrix
 
-  val = 0.0
+  val = zero(T)
   for i=1:length(res_vec)
-    val += real(res_vec[i])*eqn.Minv[i]*real(res_vec[i])   # res^T M resa
+    val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
+#     strongres_i = eqn.Minv[i]*res_vec[i]
+#     val += strongres_i*conj(strongres_i)
   end
 
   val = sqrt(val)

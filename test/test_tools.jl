@@ -1,4 +1,8 @@
 # test the tools
+  type TestData <: AbstractSolutionData
+    Minv::Array{Float64, 1}
+  end
+
 
 facts("--- Testing misc.jl ---") do
 
@@ -108,5 +112,22 @@ facts("--- Testing misc.jl ---") do
 
   mat2[4,4] = 10
   @fact mat2[4,4] => 10
+
+
+
+  Minv = rand(10)
+  obj = TestData(Minv)
+  data = rand(10)
+
+  norm1 = calcNorm(obj, data)
+  norm2 = norm(Minv.*data)
+
+  @fact norm1 => roughly(norm2)
+
+  data = complex(rand(10), rand(10))
+  norm1 = calcNorm(obj, data)
+  norm2 = norm(Minv.*data)
+
+  @fact norm1 => roughly(norm2)
 
 end
