@@ -9,7 +9,7 @@ export Boundary
 export Interface
 export BCType
 export calcNorm
-abstract AbstractSolutionData{T3}
+abstract AbstractSolutionData{T3} # Abstract type defnition
 abstract AbstractMesh{T1}
 
 @doc """
