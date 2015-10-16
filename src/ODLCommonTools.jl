@@ -1,4 +1,4 @@
-module PDESolverCommon
+module ODLCommonTools
 include("misc.jl")
 include("sparse.jl")
 import Base.show
@@ -13,7 +13,7 @@ abstract AbstractSolutionData{T3} # Abstract type defnition
 abstract AbstractMesh{T1}
 
 @doc """
-### PDESolverCommon.Boundary
+### ODLCommonTools.Boundary
 
 Used to identify boundary faces in a finite-element grid.
 
@@ -33,7 +33,7 @@ immutable Boundary
 end
 
 @doc """
-### PDESolverCommon.Interface
+### ODLCommonTools.Interface
 
 Used to identify interfaces between elements in a finite-element grid.
 
