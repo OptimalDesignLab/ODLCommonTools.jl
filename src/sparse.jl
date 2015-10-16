@@ -1,15 +1,18 @@
-# a better interface for preallocation and populating sparse matrices
+# Description:  
+#   A better interface for preallocation and populating sparse matrices
 
 # is SparseMatrixCSC exported from base?
 # Ti is type of indices
 # Tv is typeof of values
 import Base.SparseMatrixCSC
+
 function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
-  # preallocate matrix based on maximum, minimum non zero
-  # rows in each column
-  # the type of sparse_bnds is used for the indicies
-  # the type of val is used for the values
-  # the value of val itself is never used
+# TODO: @doc this
+# preallocate matrix based on maximum, minimum non zero
+# rows in each column
+# the type of sparse_bnds is used for the indicies
+# the type of val is used for the values
+# the value of val itself is never used
 
   println("creating SparseMatrixCSC")
 
@@ -42,7 +45,6 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   for i=1:n
     num_vals_i = colptr[i+1] - colptr[i]
     min_row = sparse_bnds[1, i]
-#    max_row = sparse_bnds[2, i]
 
     # write row values to row values
     for j=1:num_vals_i
@@ -57,14 +59,18 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   return SparseMatrixCSC(m, n, colptr, rowval, nzval)
 end
 
-
+#------------------------------------------------------------------------------
+# Access methods
 import Base.getindex
+import Base.setindex!
+import Base.fill!
+
 function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
+# TODO: @doc this
 # get a nonzero value from A
 # for speed, no bounds checking
 
 #  println("using custom getindex")
-
 
   row_start = A.colptr[j]
   row_end = A.colptr[j+1] - 1
@@ -75,29 +81,15 @@ function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
     return zero(eltype(A.nzval))
   end
 
-#=
-  if i < row_min
-    println("in getindex")
-   println("i <= row_min, i = ", i, ", j = ", j, "row_min = ", row_min)
-   @assert(i >= row_min, string("i = ", i, ", j = ", j, ", row_min = ", row_min))
- end
-
-  if i > row_max
-    println("in getindex")
-    println("i >= row_max, i = ", i, ", j = ", j, "row_min = ", row_min, ", row_max = ", row_max)
-    @assert( i <= row_max)
-  end
-=#
-
   offset = i - row_min  # offset due to row
-
   valindex = row_start + offset
 
   return A.nzval[valindex]
+
 end
 
-import Base.setindex!
 function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
+# TODO: @doc this
 # get a nonzero value from A
 # for speed, no bounds checking
 
@@ -108,36 +100,20 @@ function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
   row_min = A.rowval[row_start]
   row_max = A.rowval[row_end]
 
-
   if i < row_min || i > row_max
     println(STDERR, "Warning: Cannot change sparsity pattern of this matrix")
     println(STDERR, "    i = ", i, ", j = ", j, " value = ", v)
     return A
   end
-#=  
-  if i < row_min
-   println("in setindex")
-   println("i <= row_min, i = ", i, ", j = ", j, "row_min = ", row_min)
-   @assert(i >= row_min)
- end
-
-  if i > row_max
-    println("in setindex")
-    println("i >= row_max, i = ", i, ", j = ", j, "row_min = ", row_min, ", row_max = ", row_max)
-    @assert( i <= row_max)
-  end
-=#
-
-
 
   offset = i - row_min  # offset due to row
-
   valindex = row_start + offset
   A.nzval[valindex] = v
+
   return A
+
 end
 
-import Base.fill!
 function fill!(A::SparseMatrixCSC, val)
   fill!(A.nzval, val)
   return nothing
