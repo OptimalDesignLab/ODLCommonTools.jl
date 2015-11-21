@@ -1,6 +1,6 @@
 using ArrayViews
 
-export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatmat!, smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
+export rmfile, readdlmc, printbacktrace, smallmatvec!, smallmatvec, smallmatmat!, smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, checkZeroColumns, checkIdenticalColumns, checkSparseColumns
 
 @doc """
  ### Tools rmfile
@@ -21,7 +21,10 @@ function rmfile(fname::AbstractString)
   return nothing
 end
 
-
+# this function is both slow and dangerous
+function readdlmc(fname)
+  map(x->eval(parse(x)),readcsv(fname))
+end
 
 function printbacktrace()
 # print the current call stack
