@@ -1,3 +1,7 @@
+# Name: ODLCommonTools
+# Description: Common Tools for ODL
+#   Performs the function of forward declaring abstract types
+
 module ODLCommonTools
 include("misc.jl")
 include("sparse.jl")
@@ -28,8 +32,8 @@ To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
 
 """->
 immutable Boundary
-    element::UInt32
-    face::UInt8
+  element::UInt32
+  face::UInt8
 end
 
 @doc """
@@ -78,12 +82,10 @@ function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T})
   val = zero(Float64)
   for i=1:length(res_vec)
     val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
-#     strongres_i = eqn.Minv[i]*res_vec[i]
-#     val += strongres_i*conj(strongres_i)
   end
 
   val = sqrt(val)
   return val
-end
+end     # end of calcNorm function
 
-end # module
+end     # module
