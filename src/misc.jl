@@ -23,6 +23,10 @@ function rmfile(fname::AbstractString)
   return nothing
 end
 
+# this function is both slow and dangerous
+function readdlmc(fname)
+  map(x->eval(parse(x)),readcsv(fname))
+end
 
 function printbacktrace()
 # print the current call stack

@@ -81,7 +81,7 @@ end
 function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T})
 # calculates the norm of a vector using the mass matrix
 
-  val = zero(T)
+  val = zero(Float64)
   for i=1:length(res_vec)
     val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
   end
