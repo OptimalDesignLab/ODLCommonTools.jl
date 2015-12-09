@@ -47,13 +47,14 @@ Used to identify interfaces between elements in a finite-element grid.
 * `elementR` : index of the so-called right element in the pair
 * `faceL` : the face index of the interface with respect to the left element
 * `faceR` : the face index of the interface with respect to the right element
-* `nodemap` : local mapping that matches nodes from right element to left
+* `orient` : orientation of the 'right' element relative to the 'left'
 
 **Example**
 
 Consider an interface between elements 2 and 5.  Suppose the interface is on
-face 1 of element 2 and face 3 of element 5.  This can be indicated as
-`Interface(2,5,1,3)`
+face 1 of element 2 and face 3 of element 5.  Furthermore, suppose element 5 has
+orientation 1 relative to element 1 (defintion of orientation TBD).  This can be
+indicated as `Interface(2,5,1,3,1)`
 
 """->
 immutable Interface
@@ -61,7 +62,7 @@ immutable Interface
   elementR::UInt32
   faceL::UInt8
   faceR::UInt8
-  nodemap::Array{UInt8, 1}
+  orient::UInt8
 end
 
 abstract BCType  # functor boundary condition abstract type
@@ -71,8 +72,9 @@ function show(io::IO, object::Boundary)
 end
 
 function show(io::IO, obj::Interface)
-  print(io, "Interface elementL, elementR, faceL, faceR = ", obj.elementL, ", ",
-        obj.elementR, ", ", obj.faceL, ", ", obj.faceR)
+  print(io, "Interface elementL, elementR, faceL, faceR, orient = ",
+        obj.elementL, ", ",obj.elementR, ", ", obj.faceL, ", ", obj.faceR,
+        ", ",obj.orient)
 end
 
 
