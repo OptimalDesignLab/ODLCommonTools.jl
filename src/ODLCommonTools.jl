@@ -7,7 +7,7 @@ include("misc.jl")
 include("sparse.jl")
 import Base.show
 
-export AbstractSolutionData
+export AbstractSolutionData, AbstractParamType
 export AbstractMesh
 export Boundary
 export Interface
@@ -15,7 +15,7 @@ export BCType
 export calcNorm
 abstract AbstractSolutionData{T3} # Abstract type defnition
 abstract AbstractMesh{T1}
-
+abstract AbstractParamType
 @doc """
 ### ODLCommonTools.Boundary
 
@@ -75,14 +75,44 @@ function show(io::IO, obj::Interface)
         obj.elementR, ", ", obj.faceL, ", ", obj.faceR)
 end
 
+@doc """
+###ODLCommonTools.calcNorm
 
-function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T})
+  This function calculates the norm of a vector (of length numDof) using the
+    SBP norm.
+
+    Inputs:
+      eqn:  an AbstractSolutionData
+      res_vec:  vector to calculate the norm of
+
+    Keyword arguments:
+      strongres: if res_vec is the residual of the weak form, then
+                 strongres=true computes (efficiently) the norm of the strong
+                 form residual.  Default false
+
+    Returns:
+      val:  norm of solution using SBP norm (Float64)
+
+    There are no restrctions on the datatype of res_vec (ie. it can be complex)
+
+    Aliasing restrictions: none
+
+"""->
+function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T}; strongres=false)
 # calculates the norm of a vector using the mass matrix
 
-  val = zero(Float64)
-  for i=1:length(res_vec)
-    val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
+  val = zero(real(res_vec[1]))
+
+  if !strongres
+    for i=1:length(res_vec)
+      val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
+    end
+  else  # strongres
+    for i=1:length(res_vec)
+      val += real(res_vec[i])*eqn.Minv[i]*real(res_vec[i])   # res^T M res
+    end
   end
+
 
   val = sqrt(val)
   return val
