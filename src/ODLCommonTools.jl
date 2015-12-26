@@ -13,7 +13,7 @@ export Boundary
 export Interface
 export BCType
 export calcNorm
-abstract AbstractSolutionData{Tsol} # Abstract type defnition
+abstract AbstractSolutionData{Tsol, Tres} # Abstract type defnition
 abstract AbstractMesh{Tmsh}
 abstract AbstractParamType
 typealias Abstract3DArray{T} AbstractArray{T, 3}
