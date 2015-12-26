@@ -7,7 +7,7 @@ include("misc.jl")
 include("sparse.jl")
 import Base.show
 
-export AbstractSolutionData, AbstractParamType
+export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh
 export Boundary
 export Interface
@@ -16,6 +16,7 @@ export calcNorm
 abstract AbstractSolutionData{T3} # Abstract type defnition
 abstract AbstractMesh{T1}
 abstract AbstractParamType
+typealias Abstract3DArray{T} AbstractArray{T, 3}
 @doc """
 ### ODLCommonTools.Boundary
 
