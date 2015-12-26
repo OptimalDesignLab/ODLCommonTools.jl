@@ -13,9 +13,58 @@ export Boundary
 export Interface
 export BCType
 export calcNorm
+
+@doc """
+### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
+
+  This abstract type is the supertype for all the objects that store the 
+  solution data. Every physics module should implement its own subtype.
+
+  Static parameters:
+    Tsol: datatype of solution variables
+    Tres: datatype of the mesh variables
+
+  See the repo_root/doc/interfaces.md for the description of everything this
+  type must implement.
+
+"""->
 abstract AbstractSolutionData{Tsol, Tres} # Abstract type defnition
+@doc """
+### ODLCommonTools.AbstractMesh{Tmsh}
+
+  This abstract type is the supertype for all mesh objects.  Every interface to
+  a mesh software should define its own implementation.
+
+  Static parameters:
+    Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
+          space, mapping jacobian).
+
+  See the repo_root/doc/interfaces.md for the description of everything this
+  type must implement.
+
+"""->
 abstract AbstractMesh{Tmsh}
+
+@doc """
+### ODLCommonTools.AbstractParamType
+
+  This abstract type is the supertype for all Param objects, which hold values 
+  needed for the computation in a place that is fast to access.
+
+   The Param type is also useful for dispatching to low level functions which 
+   the AbstractSolutionData might not be passed (depending on the organization 
+   of the physics module.
+
+"""->
 abstract AbstractParamType
+
+@doc """
+### ODLCommonTools.Abstract3DArray
+
+  A typealias useful for specify a 3 dimensional AbstractArray without 
+  specifying the element datatype.
+
+"""->
 typealias Abstract3DArray{T} AbstractArray{T, 3}
 @doc """
 ### ODLCommonTools.Boundary
