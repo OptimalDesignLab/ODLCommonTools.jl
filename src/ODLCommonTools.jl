@@ -12,7 +12,7 @@ export AbstractMesh
 export Boundary
 export Interface
 export BCType
-export calcNorm
+export calcNorm, calcDiffElementArea
 
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
@@ -167,5 +167,35 @@ function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T}; stron
   val = sqrt(val)
   return val
 end     # end of calcNorm function
+
+
+
+@doc """
+### EulerEquationMod.calcDiffElementArea
+
+  This function calculates the equivalent of the differential area of an element
+  at a point in the x and y directions?
+
+  Inputs:
+    nrm: a normal vector in the parametric coordinate system of the element 
+         at the node
+    dxidx: the 2x2 matrix dxi/dx at the node
+
+  Inputs/Outputs:
+    workvec: [dx, dy]
+
+"""->
+function calcDiffElementArea{T, T2, T3}(nrm::AbstractArray{T,1}, 
+                                       dxidx::AbstractArray{T2,2},
+                                       workvec::AbstractArray{T3,1})
+  fill!(workvec, zero(T3))
+  for di1 = 1:size(nrm,1)
+    for di2 = 1:size(nrm,1)
+      workvec[di2] += nrm[di1]*dxidx[di1,di2]
+    end
+  end
+  return norm(workvec)
+end
+
 
 end     # module
