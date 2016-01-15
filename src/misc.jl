@@ -5,7 +5,8 @@ using ArrayViews
 export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!, 
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
-        checkZeroColumns, checkIdenticalColumns, checkSparseColumns
+        checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
+        checkSparseRows, findLarge
 
 @doc """
  ### Tools rmfile
@@ -35,7 +36,7 @@ function printbacktrace()
   s = sprint(io->Base.show_backtrace(io, bt))
   println("backtrace: ", s)
 
-  return nothing
+  return s
 end
 
 

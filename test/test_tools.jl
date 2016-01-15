@@ -1,6 +1,7 @@
 # test the tools
   type TestData <: AbstractSolutionData
     M::Array{Float64, 1}
+    Minv::Array{Float64, 1}
   end
 
 
@@ -127,10 +128,34 @@ facts("--- Testing misc.jl ---") do
   mat2[4,4] = 10
   @fact mat2[4,4] => 10
 
+  # functions for checking sparsity
+  cnt, out_of_bounds = checkSparseColumns(mat_dense, sparse_bnds, 1e-14)
+  @fact cnt => 0
+
+  cnt, out_of_bounds = checkSparseRows(mat_dense, sparse_bnds, 1e-14)
+  @fact cnt => 0
+
+  # modify sparse_bnds to verify the functions detect out of bounds entries
+  sparse_bnds2 = copy(sparse_bnds)
+  sparse_bnds2[2, 1] = 1
+  cnt, out_of_bounds = checkSparseColumns(mat_dense, sparse_bnds2, 1e-14)
+  @fact cnt => 1
+  @fact out_of_bounds => [true, false, false, false]
+
+  cnt, out_of_bounds = checkSparseRows(mat_dense, sparse_bnds2, 1e-14)
+  @fact cnt => 1
+  @fact out_of_bounds => [true, false, false, false]
+
+
+  cnt = findLarge(mat_dense, 7.5)
+  @fact cnt => 1
+
+
 
 
   M = rand(10)
-  obj = TestData(M)
+  Minv = 1./M
+  obj = TestData(M, Minv)
   data = rand(10)
 
   norm1 = calcNorm(obj, data)
@@ -138,10 +163,32 @@ facts("--- Testing misc.jl ---") do
 
   @fact norm1 => roughly(norm2)
 
+  norm1 = calcNorm(obj, data, strongres=true)
+  norm2 = sqrt(sum(data.*Minv.*data))
+
+
   data = complex(rand(10), rand(10))
   norm1 = calcNorm(obj, data)
   norm2 = sqrt(sum(real(data).*M.*real(data)))
 
   @fact norm1 => roughly(norm2)
 
+  norm1 = calcNorm(obj, data, strongres=true)
+  norm2 = sqrt(sum(real(data).*Minv.*real(data)))
+
+  @fact norm1 => roughly(norm2)
+
+  # test calcDiffElementArea
+  dxidx = [1. 1; 0 1]
+  nrm = [1., 0]
+  workvec = rand(2)
+  calcDiffElementArea(nrm, dxidx, workvec)
+  @fact workvec => [1.0, 1.0]
+
+  @fact rmfile("abc.txt") => nothing
+
+  s = printbacktrace()
+#  println("typeof(s) = ", typeof(s))
+#  println("fieldnames(s) = ", fieldnames(s))
+  @fact typeof(s) => ASCIIString
 end
