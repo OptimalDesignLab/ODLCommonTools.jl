@@ -2,7 +2,8 @@
 
 using ArrayViews
 
-export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatmat!, 
+export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!, 
+        smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns
 
@@ -79,6 +80,41 @@ function smallmatvec{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 1})
   T3 = promote_type(T, T2)
   b = Array(T3, m)
   smallmatvec!(A, x, b)
+end
+
+
+# do A.'*x = b
+function smallmatTvec!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
+  (m,n) = size(A)
+  xm = length(x)
+  bm = length(b)
+  
+  @assert m == xm
+  @assert n == bm
+
+  @inbounds begin
+    for i=1:n  # loop over columns of A
+      # perform action for each column of A
+      # over write each entry
+      b[i] = A[1, i]*x[1]
+
+      # accumulate over rest of column
+      @simd for j=2:m
+        b[i] += A[j, i]*x[j]
+      end
+    end
+
+  end
+
+  return b
+end
+
+function smallmatTvec{T, T2}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1})
+
+  (m,n) = size(A)
+  T3 = promote_type(T, T2)
+  b = Array(T3, n)
+  smallmatTvec!(A, x, b)
 end
 
 
