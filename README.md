@@ -23,3 +23,4 @@ bandwidth dense-with-the-band `SparseMatrixCSC`s.
 [![Coverage Status](https://coveralls.io/repos/OptimalDesignLab/ODLCommonTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)
 
 [![Coverage Status](https://coveralls.io/repos/OptimalDesignLab/ODLCommonTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)
+[![codecov.io](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl/coverage.svg?branch=master)](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)
