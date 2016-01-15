@@ -1,6 +1,6 @@
 # test the tools
   type TestData <: AbstractSolutionData
-    Minv::Array{Float64, 1}
+    M::Array{Float64, 1}
   end
 
 
@@ -129,18 +129,18 @@ facts("--- Testing misc.jl ---") do
 
 
 
-  Minv = rand(10)
-  obj = TestData(Minv)
+  M = rand(10)
+  obj = TestData(M)
   data = rand(10)
 
   norm1 = calcNorm(obj, data)
-  norm2 = norm(Minv.*data)
+  norm2 = sqrt(sum(data.*M.*data))
 
   @fact norm1 => roughly(norm2)
 
   data = complex(rand(10), rand(10))
   norm1 = calcNorm(obj, data)
-  norm2 = norm(Minv.*data)
+  norm2 = sqrt(sum(real(data).*M.*real(data)))
 
   @fact norm1 => roughly(norm2)
 
