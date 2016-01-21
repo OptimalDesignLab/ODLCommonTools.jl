@@ -6,7 +6,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
-        checkSparseRows, findLarge
+        checkSparseRows, findLarge, isSymmetric
 
 @doc """
  ### Tools rmfile
@@ -410,6 +410,36 @@ function checkSparseRows{T <: Number, T2 <: Integer}(A::AbstractArray{T,2},
 
 end     # end of checkSparseRows function
 
+
+@doc """
+### ODLCommonTools.isSymmetric
+
+  This function checks if an array is symmetric or not, using
+  the specified tolerance for comparing if two entries are
+  equal.
+
+  Inputs:
+    A : an array to check for symmetry, must be possible to access all
+        entries
+    tol: tolerance for floating point equality
+
+  Outputs:
+    val: a Bool indicating if A is symmetric
+
+"""->
+function isSymmetric(A::AbstractArray, tol=1e-14)
+
+  (m,n) = size(A)
+  val = true
+  for j=1:n
+    for i=1:j
+      val = val && (abs(A[i,j] - A[j,i]) < tol)
+    end
+  end
+
+  return val
+end
+
 #----------------------------------------------------------
 export FIFOQueue, front
 import Base.push!, Base.pop!, Base.length, Base.isempty, 
@@ -505,4 +535,5 @@ function resize!(que::FIFOQueue, new_size)
 
   return nothing
 end
+
 

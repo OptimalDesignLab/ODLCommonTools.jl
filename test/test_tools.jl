@@ -191,4 +191,17 @@ facts("--- Testing misc.jl ---") do
 #  println("typeof(s) = ", typeof(s))
 #  println("fieldnames(s) = ", fieldnames(s))
   @fact typeof(s) => ASCIIString
+
+
+
+  A = [1.0 2.0; 3.0 4.0]
+  @fact isSymmetric(A) => false
+  A[2,1] = A[1,2]
+  @fact isSymmetric(A) => true
+  tol = 1e-12
+  A[2,1] += tol/2
+  @fact isSymmetric(A, tol) => true
+  A[2,1] += tol
+  @fact isSymmetric(A, tol) => false
+
 end
