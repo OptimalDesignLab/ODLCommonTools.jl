@@ -204,4 +204,6 @@ facts("--- Testing misc.jl ---") do
   A[2,1] += tol
   @fact isSymmetric(A, tol) => false
 
+  make_symmetric!(A)
+  @fact isSymmetric(A, eps()) => true
 end

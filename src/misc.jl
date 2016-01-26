@@ -6,7 +6,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
-        checkSparseRows, findLarge, isSymmetric
+        checkSparseRows, findLarge, isSymmetric, make_symmetric!
 
 @doc """
  ### Tools rmfile
@@ -438,6 +438,30 @@ function isSymmetric(A::AbstractArray, tol=1e-14)
   end
 
   return val
+end
+
+@doc """
+ODLCommonTools.make_symmetric!
+
+  This function copies the lower triangle of a matrix to the upper triangle,
+  ensuring it is exactly symmetric.  It does not checking to determine if
+  the matrix is close so symmetric beforehand
+
+  Inputs/Outputs:
+    A : a matrix of any type
+
+"""->
+function make_symmetric!(A::AbstractMatrix)
+# make the matrix symmetrix, no questions asked
+# the lower triangle of the matrix is copied to the upper
+
+  for i=1:size(A,1)
+    for j=1:(i-1)
+      A[j, i] = A[i,j]
+    end
+  end
+
+  return nothing
 end
 
 #----------------------------------------------------------
