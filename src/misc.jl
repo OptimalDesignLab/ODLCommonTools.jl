@@ -221,7 +221,7 @@ function smallmatmatT{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
 end
 
 
-function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
+function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
 # checks each row of a matrix for zeros 
 # 2d matrices only
 # returns the integer number of zero rows, and a Bool
@@ -247,7 +247,7 @@ function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
 end   # end of checkZeroRows function
 
 
-function checkZeroColumns{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
+function checkZeroColumns{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
 # TODO: @doc this
 # checks each column of a matrix for zeros
 # 2d matrices only
@@ -276,7 +276,7 @@ end   # end checkZeroColumns function
 
 function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2}, 
                                             colnum::Integer, 
-                                            tol::FloatingPoint)
+                                            tol::AbstractFloat)
 # TODO: @doc this
 # checks which columns are identical to column number col
 # returns number of column identical and an array of bools telling which ones
@@ -307,7 +307,7 @@ function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2},
 end     # end checkIdenticalColumns
 
 
-function findLarge{T <: Number}(A::AbstractArray{T,2}, tol::FloatingPoint)
+function findLarge{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
 # TODO: @doc this
 
   (m,n) = size(A)
@@ -328,7 +328,7 @@ end     # end findLarge
 
 function checkSparseColumns{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, 
                             sparsity_bnds::AbstractArray{T2, 2}, 
-                            tol::FloatingPoint)
+                            tol::AbstractFloat)
 # TODO: @doc this
 # checks that all entries outside the range specified by sparsity_bnds
 # are zero
@@ -371,7 +371,7 @@ end     # end of checkSparseColumns function
 
 function checkSparseRows{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, 
                          sparsity_bnds::AbstractArray{T2, 2},  
-                         tol::FloatingPoint)
+                         tol::AbstractFloat)
 # checks that all entries outside the range specified by sparsity_bnds
 # are zero
 # returns the number of rows with out of bounds entries and an array of
