@@ -18,9 +18,9 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
      fname::AbstractString  :  name of file
 
 """->
-function rmfile(fname::AbstractString)
+function rmfile(fname::AbstractString; recursive=false)
   if isfile(fname)
-    rm(fname)
+    rm(fname, recursive=recursive)
   end
   return nothing
 end
