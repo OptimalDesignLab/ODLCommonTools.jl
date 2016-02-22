@@ -3,6 +3,6 @@ using ODLCommonTools
 using FactCheck
 
 # write your own tests here
-@fact 1 => 1
+@fact 1 --> 1
 
 include("test_tools.jl")
