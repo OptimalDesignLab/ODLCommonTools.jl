@@ -11,7 +11,7 @@ export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh
 export Boundary
 export Interface
-export BCType, SRCType
+export BCType, SRCType, FluxType
 export calcNorm, calcDiffElementArea
 
 @doc """
@@ -118,6 +118,8 @@ end
 abstract BCType  # functor boundary condition abstract type
 
 abstract SRCType # functor source term abstract type
+
+abstract FluxType # functor DG flux abstract type
 
 function show(io::IO, object::Boundary)
   print(io, "Boundary element, face = ", object.element, ", ", object.face)
