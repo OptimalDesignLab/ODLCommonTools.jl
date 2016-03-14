@@ -8,7 +8,7 @@ include("sparse.jl")
 import Base.show
 
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
-export AbstractMesh
+export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export Boundary
 export Interface
 export BCType, SRCType, FluxType
@@ -44,6 +44,20 @@ abstract AbstractSolutionData{Tsol, Tres} # Abstract type defnition
 
 """->
 abstract AbstractMesh{Tmsh}
+
+@doc """
+### ODLCommonTools.AbstractCGMesh
+
+  The abstrac type is the supertype of all continuous Galerkin meshes
+"""->
+abstract AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh}
+
+@doc """
+### ODLCommonTools.AbstractDGGMesh
+
+  The abstrac type is the supertype of all discontinuous Galerkin meshes
+"""->
+abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
 
 @doc """
 ### ODLCommonTools.AbstractParamType
