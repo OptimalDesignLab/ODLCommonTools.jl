@@ -145,6 +145,19 @@ function show(io::IO, obj::Interface)
         ", ",obj.orient)
 end
 
+
+function isless(a::Boundary, b::Boundary)
+  if a.element < b.element
+    return true
+  elseif a.element > b.element
+    return false
+  elseif a.face > b.face     # elements are same
+    return true
+  else
+    return false
+  end
+
+end
 @doc """
 ###ODLCommonTools.calcNorm
 
