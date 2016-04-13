@@ -6,7 +6,7 @@ module ODLCommonTools
 include("misc.jl")
 include("sparse.jl")
 import Base.show
-
+import Base.isless
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export Boundary
