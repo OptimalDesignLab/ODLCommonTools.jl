@@ -1,3 +1,4 @@
+__precompile__(false)
 # Name: ODLCommonTools
 # Description: Common Tools for ODL
 #   Performs the function of forward declaring abstract types
@@ -157,6 +158,20 @@ function isless(a::Boundary, b::Boundary)
     return false
   end
 
+end
+
+function isless(a::Interface, b::Interface)
+  if a.elementL < b.elementL
+    return true
+  elseif a.elementL > b.elementL
+    return false
+  end
+
+  if a.elementR < b.elementR
+    return true
+  else
+    return false
+  end
 end
 @doc """
 ###ODLCommonTools.calcNorm
