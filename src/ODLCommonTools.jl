@@ -1,4 +1,4 @@
-__precompile__(false)
+__precompile__(true)
 # Name: ODLCommonTools
 # Description: Common Tools for ODL
 #   Performs the function of forward declaring abstract types
