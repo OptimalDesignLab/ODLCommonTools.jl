@@ -119,4 +119,57 @@ function fill!(A::SparseMatrixCSC, val)
   return nothing
 end
 
-  
+@doc """
+### ODLCommonTools.findfast
+
+  This function searches a sorted array for a given value, returning 0
+  if it is not found.  
+
+  The algorithm is nearly branchless and performs well compared to
+  standard implementations.  
+
+  The search takes a maximum of log2(n) + 2 iterations when the requested
+  value is present and n iteration if it is not found.
+
+  Inputs:
+    arr: array of integers
+    val: value to find
+
+  Outputs:
+    idx: the index of the array containing the value, 0 if not found
+"""->
+function fastfind{T <: Integer}(a::AbstractArray{T}, val)
+
+  foundflag = false
+  lbound = 1
+  ubound = length(a)
+  idx = lbound + div(ubound - lbound, 2)
+#  itermax = floor(log2(length(a))) + 2
+  itermax = length(a)
+  itr = 0
+
+
+#  println("lbound = ", lbound)
+#  println("ubound = ", ubound)
+
+  while ( a[idx] != val && itr <= itermax)
+#    println("\ntop of loop, idx = ", idx)
+    if a[idx] > val  # the value lies in the left half 
+      ubound = idx
+      idx = lbound + fld(ubound - lbound, 2)
+#      println("updating ubound = ", ubound)
+    else  # a[idx] < val  # value lies in the right half
+      lbound = idx
+      idx = lbound + cld(ubound - lbound, 2)
+#      println("updating lbound = ", lbound)
+    end
+    
+    itr += 1
+  end
+
+    successflag = (itr <= itermax)
+  return idx*successflag
+#  return idx
+end
+
+

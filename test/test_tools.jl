@@ -206,4 +206,25 @@ facts("--- Testing misc.jl ---") do
 
   make_symmetric!(A)
   @fact isSymmetric(A, eps()) --> true
+
+
+  # test fastfind
+  A = rand(Int, 999)
+  sort!(A)
+  for i=1:length(A)
+    idx = ODLCommonTools.fastfind(A, A[i])
+    @fact idx --> i
+  end
+
+  A = rand(Int, 1000)
+  sort!(A)
+  for i=1:length(A)
+    idx = ODLCommonTools.fastfind(A, A[i])
+    @fact idx --> i
+  end
+
+
+  A = collect(1:10)
+  idx = ODLCommonTools.fastfind(A, 11)
+  @fact idx --> 0
 end
