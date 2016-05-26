@@ -175,49 +175,6 @@ function isless(a::Interface, b::Interface)
     return false
   end
 end
-@doc """
-###ODLCommonTools.calcNorm
-
-  This function calculates the norm of a vector (of length numDof) using the
-    SBP norm.
-
-    Inputs:
-      eqn:  an AbstractSolutionData
-      res_vec:  vector to calculate the norm of
-
-    Keyword arguments:
-      strongres: if res_vec is the residual of the weak form, then
-                 strongres=true computes (efficiently) the norm of the strong
-                 form residual.  Default false
-
-    Returns:
-      val:  norm of solution using SBP norm (Float64)
-
-    There are no restrctions on the datatype of res_vec (ie. it can be complex)
-
-    Aliasing restrictions: none
-
-"""->
-function calcNorm{T}(eqn::AbstractSolutionData, res_vec::AbstractArray{T}; strongres=false)
-# calculates the norm of a vector using the mass matrix
-
-  val = zero(real(res_vec[1]))
-
-  if !strongres
-    for i=1:length(res_vec)
-      val += real(res_vec[i])*eqn.M[i]*real(res_vec[i])   # res^T M res
-    end
-  else  # strongres
-    for i=1:length(res_vec)
-      val += real(res_vec[i])*eqn.Minv[i]*real(res_vec[i])   # res^T M res
-    end
-  end
-
-
-  val = sqrt(val)
-  return val
-end     # end of calcNorm function
-
 
 
 @doc """

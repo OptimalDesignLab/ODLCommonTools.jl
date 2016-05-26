@@ -1,9 +1,3 @@
-# test the tools
-  type TestData <: AbstractSolutionData
-    M::Array{Float64, 1}
-    Minv::Array{Float64, 1}
-  end
-
 
 facts("--- Testing misc.jl ---") do
 
@@ -152,31 +146,6 @@ facts("--- Testing misc.jl ---") do
 
 
 
-
-  M = rand(10)
-  Minv = 1./M
-  obj = TestData(M, Minv)
-  data = rand(10)
-
-  norm1 = calcNorm(obj, data)
-  norm2 = sqrt(sum(data.*M.*data))
-
-  @fact norm1 --> roughly(norm2)
-
-  norm1 = calcNorm(obj, data, strongres=true)
-  norm2 = sqrt(sum(data.*Minv.*data))
-
-
-  data = complex(rand(10), rand(10))
-  norm1 = calcNorm(obj, data)
-  norm2 = sqrt(sum(real(data).*M.*real(data)))
-
-  @fact norm1 --> roughly(norm2)
-
-  norm1 = calcNorm(obj, data, strongres=true)
-  norm2 = sqrt(sum(real(data).*Minv.*real(data)))
-
-  @fact norm1 --> roughly(norm2)
 
   # test calcDiffElementArea
   dxidx = [1. 1; 0 1]
