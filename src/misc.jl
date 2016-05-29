@@ -7,7 +7,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
-        getBranchName
+        getBranchName, getTimeString
 
 @doc """
  ### Tools rmfile
@@ -567,4 +567,15 @@ function getBranchName(dir=pwd())
   return nm[1:end-1]  # remove newline
 
 return end
+
+function getTimeString()
+  t = now()
+  y = Dates.year(t)
+  m = Dates.month(t)
+  d = Dates.day(t)
+  h = Dates.hour(t)
+  minutes = Dates.minute(t)
+
+  return "$y-$m-$d $h:$minutes"
+end
 

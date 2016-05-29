@@ -64,7 +64,9 @@ facts("--- Testing misc.jl ---") do
 
   branch_name = getBranchName()
   @fact length(branch_name) --> greater_than(0)
-  println("branch_name")
+
+  time_str = getTimeString()
+  @fact length(time_str) --> greater_than(0)
 
   A = [0.0 0 1; 0 0 0; 1 0 0]
   numz, arr = checkZeroRows(A, eps())
