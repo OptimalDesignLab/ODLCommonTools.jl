@@ -6,7 +6,8 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
-        checkSparseRows, findLarge, isSymmetric, make_symmetric!
+        checkSparseRows, findLarge, isSymmetric, make_symmetric!,
+        getBranchName
 
 @doc """
  ### Tools rmfile
@@ -560,4 +561,10 @@ function resize!(que::FIFOQueue, new_size)
   return nothing
 end
 
+function getBranchName(dir=pwd())
+# get the name of the current branch of the git repo in the specified directory
+  nm = readall(`git rev-parse --abbrev-ref HEAD`)
+  return nm[1:end-1]  # remove newline
+
+return end
 

@@ -62,6 +62,9 @@ facts("--- Testing misc.jl ---") do
   b = smallmatTvec(A, x)
   @fact b --> roughly(b2, atol=1e-14)
 
+  branch_name = getBranchName()
+  @fact length(branch_name) --> greater_than(0)
+  println("branch_name")
 
   A = [0.0 0 1; 0 0 0; 1 0 0]
   numz, arr = checkZeroRows(A, eps())
