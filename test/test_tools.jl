@@ -1,3 +1,14 @@
+  type TestMesh <: AbstractMesh
+    pertNeighborEls::Array{Int, 2}
+    dofs::Array{Int, 3}
+    neighbor_nums::Array{Int, 2}
+    numDof::Int
+    numNodesPerElement::Int
+    numDofPerNode::Int
+    numEl::Int
+    coloringDistance::Int
+  end
+
 
 facts("--- Testing misc.jl ---") do
 
@@ -101,7 +112,7 @@ facts("--- Testing misc.jl ---") do
   empty!(q)
   @fact isempty(q) --> true
 
-
+  # test SparseMatrixCSC
   mat_dense = [1 3 0 0; 2 4 6 0; 0 5 7 0; 0 0 0 8]
   sparse_bnds = [1 1 2 4; 2 3 3 4]
 
@@ -111,7 +122,6 @@ facts("--- Testing misc.jl ---") do
 
   @fact mat.colptr --> mat2.colptr
   @fact mat.rowval --> mat2.rowval
-
   @fact mat2[1,1] --> 1
   @fact mat2[2,1] --> 2
   @fact mat2[1,2] --> 3
@@ -148,6 +158,42 @@ facts("--- Testing misc.jl ---") do
 
   cnt = findLarge(mat_dense, 7.5)
   @fact cnt --> 1
+
+
+
+  # check tighter SparseMatrixCSC
+  coloringDistance = 0
+  pertNeighborEls = [1 0; 2 0]
+  neighbor_nums = Array(Int, 0, 0)
+  numNodesPerElement = 3
+  numDofPerNode = 4
+  numEl = 2
+  numDof = numDofPerNode*numNodesPerElement*numEl
+  dofs = zeros(Int, numDofPerNode, numNodesPerElement, numEl)
+  for i=1:length(dofs)
+    dofs[i] = i
+  end
+
+
+  mesh = TestMesh(pertNeighborEls, dofs, neighbor_nums, numDof, numNodesPerElement, numDofPerNode, numEl, coloringDistance)
+
+  mat = SparseMatrixCSC(mesh, Int)
+
+  # verify sortedness of rows
+  for i=1:mesh.numDof
+    start_ptr = mat.colptr[i]
+    end_ptr = mat.colptr[i+1] - 1
+    vals_i = mat.rowval[start_ptr:end_ptr]
+    @fact issorted(vals_i) --> true
+  end
+
+  mat_dense = zeros(numDof, numDof)
+  mat_dense[1:12, 1:12] = 1
+  mat_dense[13:24, 13:24] = 2
+  mat_sparse = sparse(mat_dense)
+  @fact mat.colptr --> mat_sparse.colptr
+  @fact mat.rowval --> mat_sparse.rowval
+
 
 
 
@@ -201,4 +247,8 @@ facts("--- Testing misc.jl ---") do
   A = collect(1:10)
   idx = ODLCommonTools.fastfind(A, 11)
   @fact idx --> 0
+
+  A = collect(1:2)
+  idx = ODLCommonTools.fastfind(A, 2)
+  @fact idx --> 2
 end

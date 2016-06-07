@@ -4,8 +4,6 @@ __precompile__(true)
 #   Performs the function of forward declaring abstract types
 
 module ODLCommonTools
-include("misc.jl")
-include("sparse.jl")
 import Base.show
 import Base.isless
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
@@ -205,4 +203,6 @@ function calcDiffElementArea{T, T2, T3}(nrm::AbstractArray{T,1},
 end
 
 
+include("misc.jl")
+include("sparse.jl")
 end     # module
