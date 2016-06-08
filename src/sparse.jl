@@ -255,10 +255,11 @@ else
     row_end = A.colptr[j+1] - 1
     rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
-
+#=
     if val_idx == 0
       throw(ErrorException("entry $i, $j not found"))
     end
+=#
     idx = row_start + val_idx - 1
     A.nzval[idx] = v
 
