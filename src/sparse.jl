@@ -6,17 +6,17 @@
 # Tv is typeof of values
 import Base.SparseMatrixCSC
 
-function SparseMatrixCSC{Tv}(mesh::AbstractMesh, ::Type{Tv})
+function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv})
 # construct a SparseMatrixCSC that preallocates the space needed for values
 # tightly
 # this should be exact for DG and a slight overestimate for CG
 
+  println("----- entered SparseMatrixCSC constructor -----")
 
   # calculate lengths of vectors
   # nel_per_el: number of elements (including self) each element is connected to
-  if mesh.coloringDistance == 0
-    nel_per_el = 1
-  elseif mesh.coloringDistance == 2
+  if mesh.coloringDistance == 2
+    println("distance-2 coloring")
     nel_per_el = size(mesh.neighbor_nums, 1)
   else
     throw(ErrorException("Unsupported coloring distance"))
@@ -26,21 +26,89 @@ function SparseMatrixCSC{Tv}(mesh::AbstractMesh, ::Type{Tv})
   nvals_per_column = mesh.numNodesPerElement*mesh.numDofPerNode*nel_per_el
   nvals = nvals_per_column*mesh.numDof
 
+  println("nvals_per_column = ", nvals_per_column)
+
+  # figure out the offset of first dof on the element
+  min_dof_per_element = zeros(eltype(mesh.dofs), mesh.numEl)
+  for i=1:mesh.numEl
+    dofs_i = view(mesh.dofs, :, :, i)
+    min_dof, idx = findmin(dofs_i)
+    min_dof_per_element[i] = min_dof
+  end
+
+  perm = sortperm(min_dof_per_element)
+
+  # visit the elements in the perm order and calculate offsets and colptrs
+  starting_offset = zeros(eltype(mesh.dofs), mesh.numEl)
+  starting_offset[1] = 0
   colptr = Array(Int64, ndof+1)
   rowvals = zeros(Int64, nvals)
-  nzvals = zeros(Tv, nvals)
-
-  # set up colptr
+  println("length(colptr) = ", length(colptr))
   colptr[1] = 1
+  colptr_pos = 2
+
+  # to first element of colptr
+  nnz_curr = 0  # current element number of neighbors
+  nnz_prev = 0  # previous element number of neighbors
+  # count number of elements
+  for j=1:nel_per_el
+    if mesh.pertNeighborEls[perm[1], j] > 0
+      nnz_curr += 1
+    end
+  end
+  for j=1:nDofPerElement
+    println("inserting values into colptr index ", colptr_pos)
+    colptr[colptr_pos] = colptr[colptr_pos-1] + nnz_curr*nDofPerElement
+    colptr_pos += 1
+  end
+
+  nnz_prev = nnz_curr
+
+  # now handle the rest of the mesh
+  for i=2:mesh.numEl
+    el_i = perm[i]
+    el_i_1 = perm[i-1]
+
+    println("inspecting element ", el_i, ", previous element was ", el_i_1)
+    # count number of elements
+    nnz_curr = 0
+    for j=1:size(mesh.pertNeighborEls, 2)
+      if mesh.pertNeighborEls[el_i, j] > 0
+        nnz_curr += 1
+      end
+    end
+    println("nnz_curr = ", nnz_curr)
+    println("nnz_prev = ", nnz_prev)
+    println("pertNeighborEls = ", mesh.pertNeighborEls[el_i, :])
+    # for calculating offset to the beginning of current element, use nnz of
+    # previous element
+    starting_offset[i] = starting_offset[i-1] + nnz_prev*nDofPerElement*nDofPerElement
+
+    # for assignment colptr of current element,  use nnz_curr
+    for j=1:nDofPerElement
+      println("inserting values into colptr index ", colptr_pos)
+      colptr[colptr_pos] = colptr[colptr_pos-1] + nnz_curr*nDofPerElement
+      colptr_pos += 1
+    end
+
+    nnz_prev = nnz_curr
+  end
+
+
+
+#=
+  # set up colptr
   for i=2:length(colptr)
     colptr[i] = colptr[i-1] + nvals_per_column
   end
+=#
 
   # set up rowvals
   dofs_i = zeros(eltype(mesh.dofs), nvals_per_column)
   elnums_i = zeros(eltype(mesh.pertNeighborEls), nel_per_el)
   # loop over elements because all nodes on an element have same sparsity
   for i=1:mesh.numEl
+    println("processing element ", i)
 
     # get the element numbers
     pos = 1
@@ -51,6 +119,8 @@ function SparseMatrixCSC{Tv}(mesh::AbstractMesh, ::Type{Tv})
         pos += 1
       end
     end
+    println("number of related elements = ", pos-1)
+    println("neighbor elements = ", mesh.pertNeighborEls[i, :])
 
     # copy dof numbers into array
     for j = 1:(pos-1)
@@ -61,28 +131,39 @@ function SparseMatrixCSC{Tv}(mesh::AbstractMesh, ::Type{Tv})
     end
 
     dofs_used = view(dofs_i, 1:(pos-1)*nDofPerElement)
+    println("number of dofs used = ", length(dofs_used))
     # sort them
     sort!(dofs_used)
     @assert dofs_used[1] != 0
 
-    # note: although it would be technically easy to de-duplicate the dof
-    #       numbers here, we don't because that would make it difficult to 
-    #       calculate the starting position on rowvals for each dof
+    ndof_used = length(dofs_used)
+    min_dof, idx = findmin(view(mesh.dofs, :, :, i))
+
 
     for j=1:mesh.numNodesPerElement
+      println("  node ", j)
       for k=1:mesh.numDofPerNode
+        println("    dof ", k)
         # compute starting location in rowvals
         mydof = mesh.dofs[k, j, i]
-        start_idx = (mydof-1)*nvals_per_column + 1
+        println("mydof = ", mydof)
+        println("colptr range = ", colptr[mydof], ", ",  colptr[mydof+1] -1)
+        println("starting_offset = ", starting_offset[i])
+        start_idx = starting_offset[i] + 1 + (mydof - min_dof)*ndof_used
+#        start_idx = (mydof-1)*nvals_per_column + 1
+        println("    insering into rowvals starting at index ", start_idx)
         # set them in rowvals
-        for p=1:length(dofs_used)
-          rowvals[start_idx + p - 1] = dofs_used[p]
+        for p=1:ndof_used
+          idx = start_idx + p - 1
+          println("      idx, val = ", idx, ", ", dofs_used[p])
+          rowvals[idx] = dofs_used[p]
         end
       end
     end
 
   end  # end loop over elements
 
+  nzvals = zeros(Tv, nvals)
   return SparseMatrixCSC(ndof, ndof, colptr, rowvals, nzvals)
 
 end
@@ -216,6 +297,10 @@ else
     row_end = A.colptr[j+1] - 1
     rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
+
+    if val_idx == 0
+      throw(ErrorException("entry $i, $j not found"))
+    end
     idx = row_start + val_idx - 1
     A.nzval[idx] = v
 

@@ -1,4 +1,4 @@
-  type TestMesh <: AbstractMesh
+  type TestMesh <: AbstractDGMesh
     pertNeighborEls::Array{Int, 2}
     dofs::Array{Int, 3}
     neighbor_nums::Array{Int, 2}
@@ -162,9 +162,9 @@ facts("--- Testing misc.jl ---") do
 
 
   # check tighter SparseMatrixCSC
-  coloringDistance = 0
+  coloringDistance = 2
   pertNeighborEls = [1 0; 2 0]
-  neighbor_nums = Array(Int, 0, 0)
+  neighbor_nums = Array(Int, 1, 1)
   numNodesPerElement = 3
   numDofPerNode = 4
   numEl = 2
@@ -191,6 +191,13 @@ facts("--- Testing misc.jl ---") do
   mat_dense[1:12, 1:12] = 1
   mat_dense[13:24, 13:24] = 2
   mat_sparse = sparse(mat_dense)
+  println("mat.colptr = ", mat.colptr)
+  println("mat_sparse.colptr = ", mat_sparse.colptr)
+  println("length (mat.rowval) = ", length(mat.rowval))
+  println("length(mat_sparse.rowval) = ", length(mat_sparse.rowval))
+
+  println("mat.rowval = ", mat.rowval)
+  println("mat_sparse.rowval = ", mat_sparse.rowval)
   @fact mat.colptr --> mat_sparse.colptr
   @fact mat.rowval --> mat_sparse.rowval
 
