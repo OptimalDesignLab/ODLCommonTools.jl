@@ -12,6 +12,7 @@ export Boundary
 export Interface
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
+export ElementTopology3
 
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
@@ -174,9 +175,41 @@ function isless(a::Interface, b::Interface)
   end
 end
 
+"""
+### ODLCommonTools.ElementTopology3
+
+  This type describes the topology of the reference element.  For now, it only
+  contains face information, but eventually will needed more info.
+"""
+
+immutable ElementTopology3
+  face_verts::Array{Int, 2}  # 3 x 4 array holding the vertices of each face of                                a tet
+
+  function ElementTopology3(face_verts::Array{Int, 2})
+
+    # do sanity checks
+
+    # check all vertices are within range
+    for i=1:length(face_verts)
+      @assert face_verts[i] > 0
+      @assert face_verts[i] <= 4
+    end
+
+    # check faces are distinct
+    for i=1:size(face_verts, 2)
+      curr_face = sort(face_verts[:, i])
+      for j=(i+1):size(face_verts, 2)
+        @assert sort(face_verts[:, j]) != curr_face
+      end
+    end
+
+    return new(face_verts)
+
+  end  # end function
+end
 
 @doc """
-### EulerEquationMod.calcDiffElementArea
+### ODLCommonTools.calcDiffElementArea
 
   This function calculates the equivalent of the differential area of an element
   at a point in the x and y directions?

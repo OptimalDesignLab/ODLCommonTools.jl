@@ -258,4 +258,13 @@ facts("--- Testing misc.jl ---") do
   A = collect(1:2)
   idx = ODLCommonTools.fastfind(A, 2)
   @fact idx --> 2
+
+
+  # test topology type
+  face_verts = [1 1 1 2; 2 2 3 3; 3 4 4 4]
+  ElementTopology3(face_verts)  # test the assertions didn't fire
+
+  face_verts[3,2] = 3 # duplicate a face
+  @fact_throws ElementTopology3(face_verts)
+
 end
