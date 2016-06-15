@@ -267,4 +267,6 @@ facts("--- Testing misc.jl ---") do
   face_verts[3,2] = 3 # duplicate a face
   @fact_throws ElementTopology3(face_verts)
 
+  ElementTopology3()
+
 end

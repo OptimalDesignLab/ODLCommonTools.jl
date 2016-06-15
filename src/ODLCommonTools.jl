@@ -208,6 +208,14 @@ immutable ElementTopology3
   end  # end function
 end
 
+"""
+  Default constructor that uses Pumi topology
+"""
+function ElementTopology3()
+  face_verts = [1 1 2 1; 2 2 3 3; 3 4 4 4]
+  return ElementTopology3(face_verts)
+end
+
 @doc """
 ### ODLCommonTools.calcDiffElementArea
 
