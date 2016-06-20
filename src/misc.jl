@@ -471,42 +471,39 @@ import Base.push!, Base.pop!, Base.length, Base.isempty,
        Base.resize!, Base.empty!
 type FIFOQueue{T}
   s::Array{T, 1}  # array of values
-  pos::Int  # current head of que (points to most recently inserted elements)
+  tail::Int  # current tail of que (points to most recently inserted elements)
+  head::Int  # points to least recently inserted elements (next to pop)
   fac::Float64  # factor by which to expand que when it runs out of space
 
-  function FIFOQueue(; size_hint=0, fac=1.4)
+  function FIFOQueue(; size_hint=1, fac=1.4)
     # size_hint = initial size of array
     arr = Array(T, size_hint)
-    pos = 0
-   return new(arr, pos, fac)
+    tail = 0
+    head = 1
+   return new(arr, tail, head, fac)
   end
 
 end
 
 function push!{T}(que::FIFOQueue{T}, val::T)
-  que.pos += 1
   # check size
-  println("que.pos = ", que.pos)
-  println("que length = ", length(que.s))
   len = length(que.s)
-  if que.pos > len
-    println("resizing que")
-    new_size = convert(Int, max(que.pos, floor(len*que.fac)))
-    println("new_size = ", new_size)
-    resize!(que.s, new_size)
+  if (que.tail + 1) > len
+    resize_que!(que)
   end
 
-  println("que.pos = ", que.pos)
+  que.tail += 1
   # do insertion
-  que.s[que.pos] = val
+  que.s[que.tail] = val
 
   return nothing
 end
 
 function pop!{T}(que::FIFOQueue{T})
-  pos = que.pos
+  # add check that head >= tail ?
+  pos = que.head
   val = que.s[pos]
-  que.pos -= 1
+  que.head += 1
 
   return val
 end
@@ -524,20 +521,20 @@ end
 
 # function front retrieve element without removing
 function front{T}(que::FIFOQueue{T})
-  return que.s[que.pos]
+  return que.s[que.head]
 end
 
 # function popN!  # remove multiple elements
 
 function length(que::FIFOQueue)
-  return que.pos
+  return que.tail - que.head + 1
 end
 
 # for general collection compatability
 endof(que::FIFOQueue) = length(que)
 
 function isempty(que::FIFOQueue)
-  return que.pos == 0
+  return que.head > que.tail
 end
 
 function empty!(que::FIFOQueue)
@@ -552,7 +549,7 @@ end
 
 function resize!(que::FIFOQueue, new_size)
   # change size of que, if doing so will not remove elements
-  if new_size > que.pos
+  if new_size > que.tail
     resize!(que.s, new_size)
   else
     println(STDERR, "Warning: not resizing que")
@@ -560,6 +557,25 @@ function resize!(que::FIFOQueue, new_size)
 
   return nothing
 end
+
+# for resizing the que when it runs out of space
+function resize_que!(que::FIFOQueue)
+
+  # decide if shifting the queue or resizing it is better
+  if que.head > cld(length(que), 10)
+    pos = 1
+    for i=que.head:que.tail
+      que.s[pos] = que.s[i]
+      pos += 1
+    end
+    que.head = 1
+    que.tail = pos - 1
+  else  # resize
+    new_size = convert(Int, ceil(length(que)*que.fac))
+    resize!(que.s, new_size)
+  end
+end
+
 
 function getBranchName(dir=pwd())
 # get the name of the current branch of the git repo in the specified directory

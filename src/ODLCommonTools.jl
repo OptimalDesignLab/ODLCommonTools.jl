@@ -12,7 +12,7 @@ export Boundary
 export Interface
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
-export ElementTopology3
+export ElementTopology3, ElementTopology2, ElementTopology
 
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
@@ -182,10 +182,10 @@ end
   contains face information, but eventually will needed more info.
 """
 
-immutable ElementTopology3
+immutable ElementTopology{Tdim}
   face_verts::Array{Int, 2}  # 3 x 4 array holding the vertices of each face of                                a tet
 
-  function ElementTopology3(face_verts::Array{Int, 2})
+  function ElementTopology(face_verts::Array{Int, 2})
 
     # do sanity checks
 
@@ -213,7 +213,15 @@ end
 """
 function ElementTopology3()
   face_verts = [1 1 2 1; 2 2 3 3; 3 4 4 4]
-  return ElementTopology3(face_verts)
+  return ElementTopology{3}(face_verts)
+end
+
+"""
+  Constructs a dummy 2d ElementTopology
+"""
+function ElementTopology2()
+  face_verts = [1 2 3; 2 3 1]
+  return ElementTopology{2}(face_verts)
 end
 
 @doc """

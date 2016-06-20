@@ -101,8 +101,11 @@ facts("--- Testing misc.jl ---") do
   push!(q, 3)
 
   @fact length(q) --> 3
+  @fact q.head --> 1
+  @fact q.tail --> 3
   val = pop!(q)
-  @fact val --> 3
+  @fact val --> 1
+  @fact q.head --> 2
   @fact isempty(q) --> false
   @fact front(q) --> 2
 
@@ -111,6 +114,22 @@ facts("--- Testing misc.jl ---") do
 
   empty!(q)
   @fact isempty(q) --> true
+
+  q2 = FIFOQueue{Int}(size_hint=100)
+  for i=1:100
+    push!(q2, i)
+  end
+
+  @fact length(q2) --> 100
+  for i=1:50
+    @fact pop!(q2) --> i
+  end
+
+  push!(q2, 1)
+  @fact length(q2.s) --> 100
+  @fact length(q2) --> 51
+  @fact pop!(q2) --> 51
+
 
   # test SparseMatrixCSC
   mat_dense = [1 3 0 0; 2 4 6 0; 0 5 7 0; 0 0 0 8]
@@ -262,11 +281,12 @@ facts("--- Testing misc.jl ---") do
 
   # test topology type
   face_verts = [1 1 1 2; 2 2 3 3; 3 4 4 4]
-  ElementTopology3(face_verts)  # test the assertions didn't fire
+  ElementTopology{3}(face_verts)  # test the assertions didn't fire
 
   face_verts[3,2] = 3 # duplicate a face
-  @fact_throws ElementTopology3(face_verts)
+  @fact_throws ElementTopology{3}(face_verts)
 
   ElementTopology3()
+  ElementTopology2()
 
 end
