@@ -70,7 +70,7 @@ abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
    of the physics module.
 
 """->
-abstract AbstractParamType
+abstract AbstractParamType{Tdim}
 
 @doc """
 ### ODLCommonTools.Abstract3DArray
