@@ -80,6 +80,17 @@ abstract AbstractParamType{Tdim}
 
 """->
 typealias Abstract3DArray{T} AbstractArray{T, 3}
+
+@doc """
+### ODLCommonTools.AbstractOptimizationData
+
+Abstract datatype for optimization related data structures. All data types
+corresponding to optimization problems should be a subtype of this.
+
+"""->
+abstract AbstractOptimizationData
+
+
 @doc """
 ### ODLCommonTools.Boundary
 
