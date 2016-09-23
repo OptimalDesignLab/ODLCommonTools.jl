@@ -93,6 +93,18 @@ facts("--- Testing misc.jl ---") do
   @fact arr --> [false, false, false]
 
 
+  # test smallmatTmat
+  A = [1. 2 3; 4 5 6; 7 8 9]
+  x = 2*A
+  b = smallmatTmat(A, x)
+  b2 = A.'*x
+  @fact b --> roughly(b2, atol=1e-13)
+
+  A = rand(4, 3)
+  x = rand(4, 5)
+  b = smallmatTmat(A, x)
+  b2 = A.'*x
+  @fact b --> roughly(b2, atol=1e-13)
 
   q = FIFOQueue{Int}()
 

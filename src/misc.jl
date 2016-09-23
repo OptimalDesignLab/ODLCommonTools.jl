@@ -4,7 +4,8 @@ using ArrayViews
 
 export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!, 
         smallmatTvec, smallmatmat!, 
-        smallmatmat, smallmatmatT!, smallmatmatT, checkZeroRows, 
+        smallmatmat, smallmatmatT!, smallmatmatT, smallmatTmat!, smallmatTmat,
+        checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
         getBranchName, getTimeString
@@ -219,6 +220,43 @@ function smallmatmatT{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
   T3 = promote_type(T, T2)
   b = Array(T3, n, p)
   smallmatmatT!(A, x, b)
+end
+
+#TODO: performance test
+function smallmatTmat!{T, T2, T3}(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
+                                  b::AbstractMatrix{T3})
+
+  n, m = size(A)
+  xn, p = size(x)
+  bm, bn = size(b)
+
+  @assert n == xn
+  @assert m == bm
+  @assert p == bn
+
+  # overwrite b
+  fill!(b, 0)
+
+  @inbounds for i=1:p  # columns of x
+    for j=1:m  # columns of A
+      # zero b here?
+      @simd for k=1:n
+        b[j, i] += A[k, j]*x[k, i]
+      end
+    end
+  end
+
+  return nothing
+end
+
+function smallmatTmat{T, T2}(A::AbstractMatrix{T}, x::AbstractMatrix{T2})
+
+  n, m = size(A)
+  n, p = size(x)
+  T3 = promote_type(T, T2)
+  b = zeros(m, p)
+  smallmatTmat!(A, x, b)
+  return b
 end
 
 
