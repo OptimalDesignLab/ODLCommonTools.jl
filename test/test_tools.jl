@@ -9,6 +9,15 @@
     coloringDistance::Int
   end
 
+  # type for testing isFieldDefined
+  type TestType
+    a::Int
+    b::Array{Float64, 1}
+    function TestType()
+      return new()
+    end
+  end
+
 
 facts("--- Testing misc.jl ---") do
 
@@ -301,4 +310,25 @@ facts("--- Testing misc.jl ---") do
   ElementTopology3()
   ElementTopology2()
 
+
+  # test isFieldDefined
+
+  obj = TestType()
+
+  ret = isFieldDefined(obj, :a)
+  @fact ret --> true  # bitstypes fields are always defined
+
+  obj.a = 2
+  ret = isFieldDefined(obj, :a)
+  @fact ret --> true
+
+  ret = isFieldDefined(obj, :a, :b)
+  @fact ret --> false
+
+  @fact_throws isFieldDefined(obj, :a, :c)
+  @fact_throws isFieldDefined(obj)
+
+  obj.b = rand(3)
+  ret = isFieldDefined(obj, :a, :b)
+  @fact ret --> true
 end

@@ -8,7 +8,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
-        getBranchName, getTimeString
+        getBranchName, getTimeString, isFieldDefined
 
 @doc """
  ### Tools rmfile
@@ -632,4 +632,37 @@ function getTimeString()
 
   return "$y-$m-$d $h:$minutes"
 end
+@doc """
+  
+  Wrapper and generalization of Base.isdefined.
+  This function takes an object and one or more symbols and checks if
+  the fields of the object with those names are defined, but throws an 
+  exception if the symbol is not a field of the type.  Returns true 
+  iff all field names are defined.
+"""
+function isFieldDefined(obj, req_fieldnames...)
+
+  if length(req_fieldnames) == 0
+    throw(ErrorException("must check at least one fieldname"))
+  end
+
+  
+  fnames = fieldnames(obj)
+  obj_type = typeof(obj)
+  alldefined = true
+  for i=1:length(req_fieldnames)
+    fname_i = symbol(req_fieldnames[i])  # convert to symbol if possible
+
+    if !(fname_i in fnames)
+      throw(ErrorException("fieldname $fname_i is not a field of $obj_type"))
+    end
+
+    alldefined = alldefined && isdefined(obj, fname_i)
+  end
+
+  return alldefined
+end
+
+
+
 
