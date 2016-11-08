@@ -6,6 +6,8 @@ __precompile__(true)
 module ODLCommonTools
 import Base.show
 import Base.isless
+import Base.copy
+import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export Boundary
@@ -13,6 +15,7 @@ export Interface
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
+export copyForMultistage
 
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
@@ -90,6 +93,104 @@ corresponding to optimization problems should be a subtype of this.
 """->
 abstract AbstractOptimizationData
 
+@doc """
+
+In place copy function for AbstractSolutionData
+
+"""->
+function copy!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
+
+  copy!(eqn_dest.q, eqn_src.q)
+
+  # slight optimization- checking if we need to copy q_vec at all,
+  #   in case q_vec & q point to the same thing
+  if pointer(eqn_src.q) != pointer(eqn_src.q_vec)
+    copy!(eqn_dest.q_vec, eqn_src.q_vec)
+  end
+
+  # This is needed because we suspect copy! will only work down one level
+  num_inner_arrays = length(eqn_src.q_face_send)
+  for i = 1:num_inner_arrays
+    copy!(eqn_dest.q_face_send[i], eqn_src.q_face_send[i])
+    copy!(eqn_dest.q_face_recv[i], eqn_src.q_face_recv[i])
+  end
+
+  copy!(eqn_dest.res, eqn_src.res)
+  # same slight optimization as above for q & q_vec
+  if pointer(eqn_src.res) != pointer(eqn_src.res_vec)
+    copy!(eqn_dest.res_vec, eqn_src.res_vec)
+  end
+
+  return nothing
+  
+end
+
+@doc """
+
+Not in place copy function for AbstractSolutionData. 
+    We want this to throw an error because copy! is better.
+
+"""->
+function copy(eqn_src::AbstractSolutionData)
+
+  throw(ErrorException("Use copy!(eqn_dest, eqn_src) for AbstractSolution data, not copy"))
+
+  return nothing
+
+end
+
+function copyForMultistage(eqn_src::AbstractSolutionData)
+
+#   eqn_dest = AbstractSolutionData()
+  eqn_dest = get_uninitialized_SolutionData(eqn_src)
+
+  fields = fieldnames(typeof(eqn_src))
+
+  for i = 1:length(fields)
+
+    obj = getfield(eqn_src, fields[i])
+    setfield!(eqn_dest, fields[i], obj)
+
+  end
+
+  eqn_dest.q = copy(eqn_src.q)
+  # slight optimization- checking if we need to copy q_vec at all,
+  #   in case q_vec & q point to the same thing
+  if pointer(eqn_src.q) != pointer(eqn_src.q_vec)
+    eqn_dest.q_vec = copy(eqn_src.q_vec)
+  else
+    eqn_dest.q_vec = reshape(eqn_dest.q, size(eqn_src.q_vec)...)
+  end
+
+  # This is needed because we suspect copy! will only work down one level
+  num_inner_arrays = length(eqn_src.q_face_send)
+  eqn_dest.q_face_send = copy(eqn_src.q_face_send)
+  eqn_dest.q_face_recv = copy(eqn_src.q_face_recv)
+  for i = 1:num_inner_arrays
+    eqn_dest.q_face_send[i] = copy(eqn_src.q_face_send[i])
+    eqn_dest.q_face_recv[i] = copy(eqn_src.q_face_recv[i])
+  end
+
+  eqn_dest.res = copy(eqn_src.res)
+  # same slight optimization as above for q & q_vec
+  if pointer(eqn_src.res) != pointer(eqn_src.res_vec)
+    eqn_dest.res_vec = copy(eqn_src.res_vec)
+  else
+    eqn_dest.res_vec = reshape(eqn_dest.res, size(eqn_src.res_vec)...)
+  end
+
+  return eqn_dest
+
+end
+
+# TODO docstring
+function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
+
+  throw(ErrorException("get_uninitialized_SolutionData not defined for AbstractSolutionData, must use concrete type"))
+
+  return nothing
+  
+end
 
 @doc """
 ### ODLCommonTools.Boundary

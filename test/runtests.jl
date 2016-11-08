@@ -6,6 +6,7 @@ using FactCheck
 @fact 1 --> 1
 
 include("test_tools.jl")
+include("test_copy.jl")
 
 b1 = Boundary(1, 2)
 b2 = Boundary(2, 3)
