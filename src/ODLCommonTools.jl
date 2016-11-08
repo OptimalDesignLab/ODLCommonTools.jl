@@ -4,6 +4,8 @@ __precompile__(true)
 #   Performs the function of forward declaring abstract types
 
 module ODLCommonTools
+using ArrayViews
+
 import Base.show
 import Base.isless
 import Base.copy
@@ -16,6 +18,7 @@ export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
 export copyForMultistage
+#export sview  # don't export this to make the change not completely breaking
 
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
@@ -362,6 +365,22 @@ function calcDiffElementArea{T, T2, T3}(nrm::AbstractArray{T,1},
   end
   return norm(workvec)
 end
+
+# it would be better if this used @boundscheck
+@doc """
+### Utils.safe_views
+
+  This bool value controls whether the function named sview refers to 
+  view or unsafe_view from the ArrayViews package
+"""->
+global const safe_views = true
+if safe_views
+  global const sview = ArrayViews.view
+else
+  global const sview = ArrayViews.unsafe_view
+end
+
+
 
 
 include("misc.jl")
