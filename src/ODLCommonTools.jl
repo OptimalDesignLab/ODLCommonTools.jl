@@ -15,7 +15,8 @@ export Interface
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
-export sview
+#export sview  # don't export this to make the change not completely breaking
+
 @doc """
 ### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
 
