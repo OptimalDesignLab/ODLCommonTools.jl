@@ -146,6 +146,7 @@ function copyForMultistage(eqn_src::AbstractSolutionData)
 
 #   eqn_dest = AbstractSolutionData()
   eqn_dest = get_uninitialized_SolutionData(eqn_src)
+  # println("----- in copyForMultistage")
 
   fields = fieldnames(typeof(eqn_src))
 

@@ -32,11 +32,11 @@ function readdlmc(fname)
   map(x->eval(parse(x)),readcsv(fname))
 end
 
-function printbacktrace()
+function printbacktrace(file=STDOUT)
 # print the current call stack
   bt = backtrace()
   s = sprint(io->Base.show_backtrace(io, bt))
-  println("backtrace: ", s)
+  println(file,"backtrace: ", s)
 
   return s
 end
