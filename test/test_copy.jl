@@ -2,12 +2,6 @@ using ODLCommonTools
 using FactCheck
 import ODLCommonTools.get_uninitialized_SolutionData
 
-function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
-
-  return AbstractSolutionData_(eqn)
-
-end
-
 type AbstractSolutionData_ <: AbstractSolutionData
   q::Array{Float64,2}
   q_vec::Array{Float64,1}
@@ -44,6 +38,13 @@ type AbstractSolutionData_ <: AbstractSolutionData
 #   end
 
 end
+
+function get_uninitialized_SolutionData(eqn::AbstractSolutionData_)
+
+  return AbstractSolutionData_(eqn)
+
+end
+
 
 facts("--- Testing copy functions ---") do
 
