@@ -8,7 +8,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
-        getBranchName, getTimeString, isFieldDefined
+        getBranchName, getTimeString, isFieldDefined, get_parallel_fname
 
 @doc """
  ### Tools rmfile
@@ -664,5 +664,36 @@ function isFieldDefined(obj, req_fieldnames...)
 end
 
 
+"""
+  Given a file name (including extension), adds an _comm_rank, where comm_rank
+  is an MPI communicator rank, to the end of the name, before the extension.
+  For example, foo.dat -> foo_0.dat
 
+  Inputs:
+    fname: original file name, including extension
+    comm_rank: communicator rank
 
+  Outputs:
+    fname_stub: new file name, including extension
+"""
+function get_parallel_fname(fname::ASCIIString, comm_rank)
+
+  # figure out where file extension starts
+  len = length(fname)
+  sep_loc = 0  # location of separator
+  for i=len:-1:1
+    if fname[i] == '.'
+      sep_loc = i
+    end
+  end
+
+  if sep_loc == 0
+    throw(ErrorException("Filename does not contain an extension"))
+  end
+
+  fname_stub = fname[1:(sep_loc-1)]  # grab the name before the extension
+  fname_stub *= "_$comm_rank"  # add the comm_rank
+  fname_stub *= fname[sep_loc:end]
+
+  return fname_stub
+end
