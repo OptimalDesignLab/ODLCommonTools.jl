@@ -8,6 +8,7 @@ import Base.show
 import Base.isless
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
+export AbstractOptimizationData
 export Boundary
 export Interface
 export BCType, SRCType, FluxType, FunctionalType
