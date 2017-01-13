@@ -331,4 +331,9 @@ facts("--- Testing misc.jl ---") do
   obj.b = rand(3)
   ret = isFieldDefined(obj, :a, :b)
   @fact ret --> true
+
+  # test file name modification
+  fname = "abc.dat"
+  fname2 = get_parallel_fname(fname, 1)
+  @fact fname2 --> "abc_1.dat"
 end
