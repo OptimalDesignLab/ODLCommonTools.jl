@@ -12,8 +12,7 @@ import Base.copy
 import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
-export Boundary
-export Interface
+export Boundary, Interface, getElementL, getFaceL
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
@@ -267,7 +266,7 @@ function getFaceL(bndry::Boundary)
   return bndry.face
 end
 
-function getFaceR(iface::Interface)
+function getFaceL(iface::Interface)
   return iface.faceL
 end
 

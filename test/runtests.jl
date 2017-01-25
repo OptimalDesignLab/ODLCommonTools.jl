@@ -2,6 +2,7 @@ using ODLCommonTools
 #using Base.Test
 using FactCheck
 
+facts("----- Testing Interface and Boundary -----") do
 # write your own tests here
 @fact 1 --> 1
 
@@ -12,6 +13,7 @@ b1 = Boundary(1, 2)
 b2 = Boundary(2, 3)
 
 @fact b1 < b2 --> true
+
 @fact b2 > b1 --> true
 
 @fact getElementL(b1) --> 1
@@ -20,8 +22,8 @@ b2 = Boundary(2, 3)
 
 b2 = Boundary(1, 3)
 
-@fact b1 < b2 --> true
-@fact b2 > b1 --> true
+@fact b1 < b2 --> false
+@fact b2 > b1 --> false
 
 b2 = Boundary(1,2)
 
@@ -36,3 +38,7 @@ i2 = Interface(2, 3, 4, 5, 6)
 
 @fact getElementL(i1) --> 1
 @fact getFaceL(i1) --> 3
+
+end
+
+FactCheck.exitstatus()
