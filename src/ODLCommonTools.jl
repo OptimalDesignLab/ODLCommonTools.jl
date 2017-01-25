@@ -13,6 +13,7 @@ import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export Boundary, Interface, getElementL, getFaceL
+export AbstractOptimizationData
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
