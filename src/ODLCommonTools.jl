@@ -15,7 +15,7 @@ export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export AbstractOptimizationData
 export Boundary
 export Interface
-export BCType, SRCType, FluxType, FunctionalType
+export BCType, BCType_revm, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
 export copyForMultistage
@@ -247,6 +247,8 @@ immutable Interface
 end
 
 abstract BCType  # functor boundary condition abstract type
+
+abstract BCType_revm # functor for reverse mode of boundary conditions
 
 abstract SRCType # functor source term abstract type
 
