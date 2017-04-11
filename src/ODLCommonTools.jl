@@ -12,6 +12,7 @@ import Base.copy
 import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
+export Boundary, Interface, getElementL, getFaceL
 export AbstractOptimizationData
 export Boundary
 export Interface
@@ -246,6 +247,32 @@ immutable Interface
   orient::UInt8
 end
 
+# small interface for Boundary and Interface
+
+"""
+  This function returns either the `element` field of a Boundary or the
+  `elementL` field of an interface.
+"""
+function getElementL(bndry::Boundary)
+  return bndry.element
+end
+
+function getElementL(iface::Interface)
+  return iface.elementL
+end
+
+"""
+  This function returns either the `face` field of a Boundary or the
+  `faceL` field of an Interface
+"""
+function getFaceL(bndry::Boundary)
+  return bndry.face
+end
+
+function getFaceL(iface::Interface)
+  return iface.faceL
+end
+
 abstract BCType  # functor boundary condition abstract type
 
 abstract BCType_revm # functor for reverse mode of boundary conditions
@@ -377,7 +404,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.view
 else
