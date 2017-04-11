@@ -14,7 +14,9 @@ export AbstractSolutionData, AbstractParamType, Abstract3DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh
 export Boundary, Interface, getElementL, getFaceL
 export AbstractOptimizationData
-export BCType, SRCType, FluxType, FunctionalType
+export Boundary
+export Interface
+export BCType, BCType_revm, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
 export copyForMultistage
@@ -272,6 +274,8 @@ function getFaceL(iface::Interface)
 end
 
 abstract BCType  # functor boundary condition abstract type
+
+abstract BCType_revm # functor for reverse mode of boundary conditions
 
 abstract SRCType # functor source term abstract type
 
