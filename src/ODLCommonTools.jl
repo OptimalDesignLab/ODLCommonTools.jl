@@ -16,7 +16,7 @@ export Boundary, Interface, getElementL, getFaceL
 export AbstractOptimizationData
 export Boundary
 export Interface
-export BCType, BCType_revm, SRCType, FluxType, FunctionalType
+export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
 export copyForMultistage
@@ -275,11 +275,13 @@ end
 
 abstract BCType  # functor boundary condition abstract type
 
-abstract BCType_revm # functor for reverse mode of boundary conditions
+abstract BCType_revm # functor for reverse mode of boundary conditions w.r.t mesh metrics
 
 abstract SRCType # functor source term abstract type
 
 abstract FluxType # functor DG flux abstract type
+
+abstract FluxType_revm # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
 
 abstract FunctionalType # functor for functional abstract type
 
