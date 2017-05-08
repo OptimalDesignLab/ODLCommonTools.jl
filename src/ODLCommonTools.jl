@@ -17,7 +17,7 @@ export AbstractOptimizationData
 export BCType, SRCType, FluxType, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
-export copyForMultistage
+#export copyForMultistage
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
@@ -96,6 +96,7 @@ corresponding to optimization problems should be a subtype of this.
 """->
 abstract AbstractOptimizationData
 
+#=
 @doc """
 
 In place copy function for AbstractSolutionData
@@ -195,6 +196,7 @@ function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
   return nothing
   
 end
+=#
 
 @doc """
 ### ODLCommonTools.Boundary
@@ -412,4 +414,5 @@ end
 
 include("misc.jl")
 include("sparse.jl")
+include("eqn_copy.jl")
 end     # module
