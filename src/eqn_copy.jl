@@ -8,9 +8,9 @@
 #   and therefore should only error out here.
 #
 
-function copy(eqn::AbstractSolutionData)
+function eqn_deepcopy(eqn::AbstractSolutionData)
 
-  error("Generic fallback copy() called erroneously. copy() should be extended for each physics module's corresponding eqn object.")
+  error("Generic fallback eqn_deepcopy() called erroneously. eqn_deepcopy() should be extended for each physics module's corresponding eqn object.")
 
   return nothing
 

@@ -98,7 +98,6 @@ corresponding to optimization problems should be a subtype of this.
 """->
 abstract AbstractOptimizationData
 
-#=
 @doc """
 
 In place copy function for AbstractSolutionData
@@ -198,7 +197,6 @@ function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
   return nothing
   
 end
-=#
 
 @doc """
 ### ODLCommonTools.Boundary
