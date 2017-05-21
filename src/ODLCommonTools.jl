@@ -19,7 +19,7 @@ export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
-export copyForMultistage
+#export copyForMultistage
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
@@ -418,4 +418,5 @@ end
 
 include("misc.jl")
 include("sparse.jl")
+include("eqn_copy.jl")
 end     # module
