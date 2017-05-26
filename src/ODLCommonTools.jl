@@ -19,7 +19,7 @@ export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
 export calcNorm, calcDiffElementArea
 export ElementTopology3, ElementTopology2, ElementTopology
-#export copyForMultistage
+export copyForMultistage
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
@@ -113,11 +113,11 @@ function copy!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
     copy!(eqn_dest.q_vec, eqn_src.q_vec)
   end
 
+
   # This is needed because we suspect copy! will only work down one level
-  num_inner_arrays = length(eqn_src.q_face_send)
-  for i = 1:num_inner_arrays
-    copy!(eqn_dest.q_face_send[i], eqn_src.q_face_send[i])
-    copy!(eqn_dest.q_face_recv[i], eqn_src.q_face_recv[i])
+  num_inner_arrays = length(eqn_src.shared_data)
+  for i = 1:length(eqn_src.shared_data)
+    copy!(eqn_dest.shared_data[i], eqn_src.shared_data[i])
   end
 
   copy!(eqn_dest.res, eqn_src.res)
@@ -169,12 +169,9 @@ function copyForMultistage(eqn_src::AbstractSolutionData)
   end
 
   # This is needed because we suspect copy! will only work down one level
-  num_inner_arrays = length(eqn_src.q_face_send)
-  eqn_dest.q_face_send = copy(eqn_src.q_face_send)
-  eqn_dest.q_face_recv = copy(eqn_src.q_face_recv)
+  num_inner_arrays = length(eqn_src.shared_data)
   for i = 1:num_inner_arrays
-    eqn_dest.q_face_send[i] = copy(eqn_src.q_face_send[i])
-    eqn_dest.q_face_recv[i] = copy(eqn_src.q_face_recv[i])
+    copy!(eqn_dest.shared_data[i], eqn_src.shared_data[i])
   end
 
   eqn_dest.res = copy(eqn_src.res)
