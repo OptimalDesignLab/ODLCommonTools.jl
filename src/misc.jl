@@ -5,6 +5,7 @@ using ArrayViews
 export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!, 
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, smallmatTmat!, smallmatTmat,
+        smallmatvec_revv!,
         checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
@@ -76,6 +77,32 @@ function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2},
   return b
 
 end   # end of smallmatvec! function
+
+# reverse mode to back propigate b to x
+function smallmatvec_revv!{T, T2, T3}(A::AbstractArray{T,2}, 
+           x_bar::AbstractArray{T2,1}, 
+           b_bar::AbstractArray{T3, 1})
+
+  (m,n) = size(A)
+  xm = length(x_bar)
+  bm = length(b_bar)
+
+  @assert n == xm
+  @assert m == bm
+
+  @inbounds begin
+    # reverse mode always updates the output, so no need to special case
+    # the i = 1 to overwrite it
+    for i=1:n
+      @simd for j=1:m
+        x_bar[i] += b_bar[j]*A[j, i]
+      end
+    end
+
+  end  # end begin inbounds
+
+  return x_bar
+end
 
 
 function smallmatvec{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 1})

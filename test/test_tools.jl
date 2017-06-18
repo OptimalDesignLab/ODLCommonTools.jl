@@ -31,6 +31,58 @@ facts("--- Testing misc.jl ---") do
   @fact b --> roughly(b2, atol=1e-14)
   @fact b --> roughly(b3, atol=1e-14)
 
+  A = rand(4, 3)
+  x = rand(3)
+  b = A*x
+  b2 = smallmatvec(A, x)
+
+  @fact b2 --> roughly(b, atol=1e-14)
+
+  # test reverse mode
+  A = rand(4,3)
+
+  x = rand(3)
+  x2 = zeros(Complex128, 3)
+  copy!(x2, x)
+
+  b = zeros(4)
+  b2 = zeros(Complex128, 4)
+
+  jac = zeros(4, 3)
+  jac2 = zeros(4, 3)
+  h = 1e-20
+  pert = Complex128(0, h)
+  for i=1:3
+    x2[i] += pert
+    fill!(b2, 0)
+    smallmatvec!(A, x2, b2)
+
+    for j=1:4
+      jac[j, i] = imag(b2[j])/h
+    end
+
+    x2[i] -= pert
+  end
+
+  for j=1:4
+    b[j] = 1  # actuall b_bar
+    fill!(x, 0)  # actuall x_bar
+    smallmatvec_revv!(A, x, b)
+
+    for i=1:3
+      jac2[j, i] = x[i]
+    end
+
+    b[j] = 0
+  end
+
+  @fact norm(jac - jac2) --> roughly(0.0, atol=1e-13)
+
+
+
+
+  
+
   A = rand(4, 4)
   x = rand(4, 2)
   b = A*x
@@ -66,7 +118,7 @@ facts("--- Testing misc.jl ---") do
   println("b2 = ", b2)
   smallmatmatT!(A, x, b)
   b3 = smallmatmatT(A, x)
-  @fact b--> roughly(b2, atol=1e-14)
+  @fact b --> roughly(b2, atol=1e-14)
   @fact b --> roughly(b3, atol=1e-14)
 
   # test smallmatTvec
