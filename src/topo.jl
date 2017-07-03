@@ -51,17 +51,21 @@ immutable ElementTopology{Tdim}
   face_edges::Array{TopoIdxType, 2}
   face_edges_flipped::Array{Bool, 2}
 
-  function ElementTopology(face_verts::Array{Int, 2}, edge_verts::Array{Int, 2}=zeros(Int, 0,0); topo2::ElementTopology=ElementTopology{1}() )
+  function ElementTopology{I1 <: Integer, I2 <: Integer}(
+                           face_verts::AbstractArray{I1, 2}, 
+                           edge_verts::AbstractArray{I2, 2}=zeros(Int, 0,0);
+                           topo2::ElementTopology=ElementTopology{1}() )
 
     # do sanity checks
 
     # check all vertices are within range
     for i=1:length(face_verts)
       @assert face_verts[i] > 0
-      @assert face_verts[i] <= 4
+      @assert face_verts[i] <= Tdim + 1
     end
 
     # check faces are distinct
+    println("face_verts = \n", face_verts)
     for i=1:size(face_verts, 2)
       curr_face = sort(face_verts[:, i])
       for j=(i+1):size(face_verts, 2)
