@@ -362,6 +362,15 @@ facts("--- Testing misc.jl ---") do
   ElementTopology3()
   ElementTopology2()
 
+  face_verts = ElementTopology3().face_verts
+  edge_verts = [1 2 3 1 2 3;
+                2 3 1 4 4 4]
+  topo = ElementTopology{3}(face_verts, edge_verts, topo2=ElementTopology2())
+
+  @fact topo.face_edges --> [1 1 2 3; 2 5 6 6; 3 4 5 4]
+  @fact topo.face_edges_flipped --> [false false false true;
+                                     false false false false;
+                                     false true  true  true]
 
   # test isFieldDefined
 
