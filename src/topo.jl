@@ -65,7 +65,6 @@ immutable ElementTopology{Tdim}
     end
 
     # check faces are distinct
-    println("face_verts = \n", face_verts)
     for i=1:size(face_verts, 2)
       curr_face = sort(face_verts[:, i])
       for j=(i+1):size(face_verts, 2)
@@ -74,9 +73,18 @@ immutable ElementTopology{Tdim}
     end
 
     if Tdim == 2
+      # face_verts == edge_verts implies the edge ordering v1 -> v2, v2 -> v3,
+      # v3 -> v1
+      # this is not strictly necessary (some people might reverse the direction
+      # of the 3rd edge) but seems good enough for now
       edge_verts = face_verts
-      face_edges = Array(TopoIdxType, 0, 0)
-      face_edges_flipped = Array(Bool, 0, 0)
+      face_edges = Array(TopoIdxType, 1, 3)
+      face_edges_flipped = Array(Bool, 1, 3)
+
+      for i=1:3
+        face_edges[1, i] = i
+        face_edges_flipped[1, i] = false
+      end
     elseif Tdim == 3
       if size(edge_verts, 1) == 0  # edge verts not known
         face_edges = Array(TopoIdxType, 0, 0)
