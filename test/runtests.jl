@@ -8,6 +8,7 @@ facts("----- Testing Interface and Boundary -----") do
 
 include("test_tools.jl")
 include("test_copy.jl")
+include("test_roview.jl")
 
 b1 = Boundary(1, 2)
 b2 = Boundary(2, 3)

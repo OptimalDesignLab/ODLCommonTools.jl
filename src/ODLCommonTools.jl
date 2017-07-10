@@ -7,6 +7,7 @@ module ODLCommonTools
 using ArrayViews
 
 include("topo.jl")
+include("ro_view.jl")
 
 import Base.show
 import Base.isless
@@ -26,6 +27,9 @@ export ElementTopology3, ElementTopology2, ElementTopology
 
 # eqn_copy.jl
 export copyForMultistage
+
+export ROView, ro_sview, ROVector, ROMatrix
+
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
@@ -360,7 +364,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.view
 else
