@@ -26,6 +26,9 @@ export ElementTopology3, ElementTopology2, ElementTopology
 
 # eqn_copy.jl
 export copyForMultistage
+
+export ROView, ro_sview, ROVector, ROMatrix, ROArray
+
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
@@ -373,4 +376,5 @@ end
 include("misc.jl")
 include("sparse.jl")
 include("eqn_copy.jl")
+include("ro_view.jl")
 end     # module
