@@ -22,7 +22,7 @@ size(A::ROView) = size(A.parent)
 length(A::ROView) = length(A.parent)
 
 # it appears there is no splatting penalty in this case
-getindex(A::ROView, idx...) = getindex(A.parent, idx...)
+@inline getindex(A::ROView, idx...) = getindex(A.parent, idx...)
 
 parent(A::ROView) = A.parent
 

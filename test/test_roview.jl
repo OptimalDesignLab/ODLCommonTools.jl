@@ -42,10 +42,11 @@ facts("----- Testing ROView -----") do
   end
 
   # check that indexing a ROView does not allocate
-  sumit(b)
-  bytes_alloc = @allocated sumit(b)
-  @fact bytes_alloc --> less_than(100)
-
+  if Base.JLOptions().can_inline == true
+    sumit(b)
+    bytes_alloc = @allocated sumit(b)
+    @fact bytes_alloc --> less_than(100)
+  end
 
 end
 
