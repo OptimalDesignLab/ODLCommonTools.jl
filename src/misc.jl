@@ -542,6 +542,7 @@ type FIFOQueue{T}
 
   function FIFOQueue(; size_hint=1, fac=1.4)
     # size_hint = initial size of array
+    size_hint = max(size_hint, 1)
     arr = Array(T, size_hint)
     tail = 0
     head = 1
@@ -558,6 +559,7 @@ function push!{T}(que::FIFOQueue{T}, val::T)
   end
 
   que.tail += 1
+  
   # do insertion
   que.s[que.tail] = val
 
