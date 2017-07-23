@@ -726,3 +726,45 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
 
   return fname_stub
 end
+
+"""
+  Prepends the given string to another string as though it is a Linux path
+  (ie. using a colon delimiter)
+
+  Inputs:
+
+    path: the existing path, can be an empty string
+    new_entry: string to add to the path (should not contain the delimiter)
+
+  Outputs:
+
+    new_path: the results of prepend operation
+"""
+function prepend_path(path::AbstractString, new_entry::AbstractString)
+
+  if path == ""
+    new_path = new_entry
+  else
+    new_path = string(new_entry, ":", path)
+  end
+
+  return new_path
+end
+
+"""
+  Like [`prepend_path`](@ref), but adds the new entry to the end rather than
+  the beginning
+"""
+function append_path(path::AbstractString, new_entry::AbstractString)
+
+  if path == ""
+    new_path = new_entry
+  else
+    new_path = string(path, ":", new_entry)
+  end
+
+  return new_path
+end
+
+
+

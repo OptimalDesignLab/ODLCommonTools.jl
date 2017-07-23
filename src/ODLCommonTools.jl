@@ -29,6 +29,9 @@ export copyForMultistage
 
 export ROView, ro_sview, ROVector, ROMatrix, ROArray
 
+# misc.jl
+export prepend_path, append_path
+
 #export sview  # don't export this to make the change not completely breaking
 
 @doc """
