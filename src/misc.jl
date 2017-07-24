@@ -542,6 +542,7 @@ type FIFOQueue{T}
 
   function FIFOQueue(; size_hint=1, fac=1.4)
     # size_hint = initial size of array
+    size_hint = max(size_hint, 1)
     arr = Array(T, size_hint)
     tail = 0
     head = 1
@@ -558,6 +559,7 @@ function push!{T}(que::FIFOQueue{T}, val::T)
   end
 
   que.tail += 1
+  
   # do insertion
   que.s[que.tail] = val
 
@@ -724,3 +726,45 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
 
   return fname_stub
 end
+
+"""
+  Prepends the given string to another string as though it is a Linux path
+  (ie. using a colon delimiter)
+
+  Inputs:
+
+    path: the existing path, can be an empty string
+    new_entry: string to add to the path (should not contain the delimiter)
+
+  Outputs:
+
+    new_path: the results of prepend operation
+"""
+function prepend_path(path::AbstractString, new_entry::AbstractString)
+
+  if path == ""
+    new_path = new_entry
+  else
+    new_path = string(new_entry, ":", path)
+  end
+
+  return new_path
+end
+
+"""
+  Like [`prepend_path`](@ref), but adds the new entry to the end rather than
+  the beginning
+"""
+function append_path(path::AbstractString, new_entry::AbstractString)
+
+  if path == ""
+    new_path = new_entry
+  else
+    new_path = string(path, ":", new_entry)
+  end
+
+  return new_path
+end
+
+
+
