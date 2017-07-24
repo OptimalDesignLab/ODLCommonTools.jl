@@ -31,35 +31,35 @@ export ROView, ro_sview, ROVector, ROMatrix, ROArray
 
 #export sview  # don't export this to make the change not completely breaking
 
-@doc """
-### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
+"""
 
   This abstract type is the supertype for all the objects that store the 
   solution data. Every physics module should implement its own subtype.
 
   Static parameters:
+
     Tsol: datatype of solution variables
     Tres: datatype of the mesh variables
 
-  See the repo_root/doc/interfaces.md for the description of everything this
+  See the [AbstractSolutionData](@ref) for the description of everything this
   type must implement.
 
-"""->
-abstract AbstractSolutionData{Tsol, Tres} # Abstract type defnition
-@doc """
-### ODLCommonTools.AbstractMesh{Tmsh}
+"""
+abstract AbstractSolutionData{Tsol, Tres}
 
+"""
   This abstract type is the supertype for all mesh objects.  Every interface to
   a mesh software should define its own implementation.
 
   Static parameters:
+
     Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
           space, mapping jacobian).
 
-  See the repo_root/doc/interfaces.md for the description of everything this
+  See the [AbstractMesh](@ref) for the description of everything this
   type must implement.
 
-"""->
+"""
 abstract AbstractMesh{Tmsh}
 
 @doc """
@@ -76,9 +76,7 @@ abstract AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh}
 """->
 abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
 
-@doc """
-### ODLCommonTools.AbstractParamType
-
+"""
   This abstract type is the supertype for all Param objects, which hold values 
   needed for the computation in a place that is fast to access.
 
@@ -86,7 +84,7 @@ abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
    the AbstractSolutionData might not be passed (depending on the organization 
    of the physics module.
 
-"""->
+"""
 abstract AbstractParamType{Tdim}
 
 @doc """
@@ -279,29 +277,55 @@ function getFaceL(iface::Interface)
   return iface.faceL
 end
 
+"""
+  Abstract supertype of all boundary condition functors
+"""
 abstract BCType  # functor boundary condition abstract type
 
+"""
+  Abstract supertype of all boundary condition functors that compute the
+  reverse mode with respect to the metrics
+"""
 abstract BCType_revm # functor for reverse mode of boundary conditions w.r.t mesh metrics
 
+"""
+  Abstract supertype of all source term functors
+"""
 abstract SRCType # functor source term abstract type
 
+"""
+  Abstract supertype of all numerical flux functions used by standard DG face
+  integrals
+"""
 abstract FluxType # functor DG flux abstract type
 
+"""
+  Abstract supertype of all numerical flux functions used by standard DG
+  face integral that compute the reverse mode with respect to the metrics
+"""
 abstract FluxType_revm # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
 
 abstract FunctionalType # functor for functional abstract type
 
+"""
+  Show method for Boundary objects
+"""
 function show(io::IO, object::Boundary)
   print(io, "Boundary element, face = ", object.element, ", ", object.face)
 end
 
+"""
+  Show method for Interface objects
+"""
 function show(io::IO, obj::Interface)
   print(io, "Interface elementL, elementR, faceL, faceR, orient = ",
         obj.elementL, ", ",obj.elementR, ", ", obj.faceL, ", ", obj.faceR,
         ", ",obj.orient)
 end
 
-
+"""
+  Compare boundaries first by element, then by face
+"""
 function isless(a::Boundary, b::Boundary)
   if a.element < b.element
     return true
@@ -315,6 +339,9 @@ function isless(a::Boundary, b::Boundary)
 
 end
 
+"""
+  Compare Interfaces, first by elementL, then by elementR
+"""
 function isless(a::Interface, b::Interface)
   if a.elementL < b.elementL
     return true
