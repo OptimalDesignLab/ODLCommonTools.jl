@@ -42,8 +42,25 @@ function printbacktrace(file=STDOUT)
   return s
 end
 
-
 function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2}, 
+           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1})
+
+  m, n = size(A)
+
+  # extrapolating from the square matrix case, where my algorithm
+  # is faster for m = n <= 8
+  if m*n <= 65
+    smallmatvec_kernel!(A, x, b)
+  else
+    A_mul_B!(b, A, x)
+#    LinAlg.BLAS.gemv!('N', 1.0, A, x, 0.0, b)
+  end
+
+  return b
+end
+
+
+function smallmatvec_kernel!{T, T2, T3}(A::AbstractArray{T,2}, 
            x::AbstractArray{T2,1}, b::AbstractArray{T3, 1})
 # TODO: this comment needs to be a @doc
 # performs matrix vector multiplication for small matrices
@@ -151,6 +168,19 @@ end
 function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, 
                                  x::AbstractArray{T2, 2}, 
                                  b::AbstractArray{T3, 2})
+  m, n = size(A)
+  if m < 6 && n < 9
+    smallmatmat_kernel!(A, x, b)
+  else
+    A_mul_B!(b, A, x)
+  end
+
+  return b
+end
+
+function smallmatmat_kernel!{T, T2, T3}(A::AbstractArray{T, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::AbstractArray{T3, 2})
 # TODO: this comment needs to be a @doc
 # multiplies matrix A by matrix x, writing the solution to matrix b
 # both dimensions of A and the final dimension of x are used for looping
@@ -196,15 +226,22 @@ function smallmatmat{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
   smallmatmat!(A, x, b)
 end
 
-
 function smallmatmatT!{T, T2, T3}(A::AbstractArray{T, 2},
+                                  x::AbstractArray{T2, 2},
+                                  b::AbstractArray{T3, 2})
+  m, n = size(A)
+  if m < 7 && n < 10
+    smallmatmatT_kernel!(A, x, b)
+  else
+    A_mul_Bt!(b, A, x)
+  end
+end
+
+function smallmatmatT_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
                                   x::AbstractArray{T2, 2},
                                   b::AbstractArray{T3, 2})
 # TODO: this comment needs to be a @doc
 # multiplies A by x.', storing result in b
-# the threshold (compared against a copying transpose of A*(x.') = b
-# is m=n~=18 with bounds checking on
-# without bounds checking, m=n~=24 appears to be the limit
 
   (p, xn) = size(x)
   (m,n) = size(A)
