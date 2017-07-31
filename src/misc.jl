@@ -49,12 +49,14 @@ function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2},
 
   # extrapolating from the square matrix case, where my algorithm
   # is faster for m = n <= 8
-  if m*n <= 65
+  # for mixed float-int operations, the arrays need to be
+  # reinterpratable
+#  if m*n <= 65
     smallmatvec_kernel!(A, x, b)
-  else
-    A_mul_B!(b, A, x)
+#  else
+#    A_mul_B!(b, A, x)
 #    LinAlg.BLAS.gemv!('N', 1.0, A, x, 0.0, b)
-  end
+#  end
 
   return b
 end
@@ -168,12 +170,12 @@ end
 function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, 
                                  x::AbstractArray{T2, 2}, 
                                  b::AbstractArray{T3, 2})
-  m, n = size(A)
-  if m < 6 && n < 9
+#  m, n = size(A)
+#  if m < 6 && n < 9
     smallmatmat_kernel!(A, x, b)
-  else
-    A_mul_B!(b, A, x)
-  end
+#  else
+#    A_mul_B!(b, A, x)
+#  end
 
   return b
 end
@@ -229,12 +231,12 @@ end
 function smallmatmatT!{T, T2, T3}(A::AbstractArray{T, 2},
                                   x::AbstractArray{T2, 2},
                                   b::AbstractArray{T3, 2})
-  m, n = size(A)
-  if m < 7 && n < 10
+#  m, n = size(A)
+#  if m < 7 && n < 10
     smallmatmatT_kernel!(A, x, b)
-  else
-    A_mul_Bt!(b, A, x)
-  end
+#  else
+#    A_mul_Bt!(b, A, x)
+#  end
 end
 
 function smallmatmatT_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
