@@ -58,8 +58,6 @@ immutable ElementTopology{Tdim}
 
     # do sanity checks
 
-    println("edge_verts = ", edge_verts)
-
     # check all vertices are within range
     for i=1:length(face_verts)
       @assert face_verts[i] > 0
