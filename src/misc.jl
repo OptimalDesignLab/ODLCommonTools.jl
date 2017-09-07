@@ -42,6 +42,28 @@ function printbacktrace(file=STDOUT)
   return s
 end
 
+#------------------------------------------------------------------------------
+# Ax = b
+
+"""
+  Computes the product Ax = b
+
+  This is a wrapper around different matrix-vector multiplication routines.
+  It calls a special method for very small matrices and vectors, falling back
+  to BLAS otherwise.  Performance tests indicate the check for which function
+  to call is not that expensive
+
+  **Inputs**
+   
+   * A: the matrix
+   * x: the vector
+
+  **Inputs/Outputs**
+
+   * b: the output vector
+
+  Aliasing restrictions: same as BLAS, b cannot alias anything
+"""
 function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2}, 
            x::AbstractArray{T2,1}, b::AbstractArray{T3, 1})
 
@@ -51,15 +73,67 @@ function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2},
   # is faster for m = n <= 8
   # for mixed float-int operations, the arrays need to be
   # reinterpratable
-#  if m*n <= 65
+  if m*n <= 65
     smallmatvec_kernel!(A, x, b)
-#  else
-#    A_mul_B!(b, A, x)
+  else
+    A_mul_B!(b, A, x)
 #    LinAlg.BLAS.gemv!('N', 1.0, A, x, 0.0, b)
-#  end
+  end
 
   return b
 end
+
+# if either of the arguments that get reinerpreted are a ContiguousView,
+# don't call BLAS
+function smallmatvec!(A::ContiguousView{Complex128,2}, 
+           x::AbstractArray{Float64,1}, b::ContiguousView{Complex128, 1})
+# this is the case where we can't reinterpret as required by the BLAS interface
+
+  smallmatvec_kernel!(A, x, b)
+
+  return b
+end
+
+
+function smallmatvec!(A::ContiguousView{Complex128,2}, 
+           x::AbstractArray{Float64,1}, b::AbstractArray{Complex128, 1})
+# this is the case where we can't reinterpret as required by the BLAS interface
+
+  smallmatvec_kernel!(A, x, b)
+
+  return b
+end
+
+function smallmatvec!(A::AbstractArray{Complex128,2}, 
+           x::AbstractArray{Float64,1}, b::ContiguousView{Complex128, 1})
+# this is the case where we can't reinterpret as required by the BLAS interface
+
+  smallmatvec_kernel!(A, x, b)
+
+  return b
+end
+
+function smallmatvec!{P<:Array, P2<:Array}(A::ROContiguousView{Complex128,2, P}, 
+           x::AbstractArray{Float64,1}, b::ContiguousView{Complex128, 1, P2})
+# this is the case where we can't reinterpret as required by the BLAS interface
+
+  smallmatvec_kernel!(A, x, b)
+
+  return b
+end
+
+
+function smallmatvec!{P<:Array}(A::ROContiguousView{Complex128,2, P}, 
+           x::AbstractArray{Float64,1}, b::AbstractArray{Complex128, 1})
+# this is the case where we can't reinterpret as required by the BLAS interface
+
+  smallmatvec_kernel!(A, x, b)
+
+  return b
+end
+
+
+
 
 
 function smallmatvec_kernel!{T, T2, T3}(A::AbstractArray{T,2}, 
@@ -131,9 +205,45 @@ function smallmatvec{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 1})
   smallmatvec!(A, x, b)
 end
 
+#------------------------------------------------------------------------------
+# A.'x = b
+
+
+"""
+  This function does A.'*x = b.  Note this uses the simple transpose of A, not
+  the Hermetian transpose.
+
+  This function call BLAS for large matrices and uses a special algorithm for
+  small matrices.
+
+  TODO: double check that the cutoff is correct.
+
+  **Inputs**
+
+   * A: the matrix
+   * x: the vector
+
+  **Inputs/Outputs**
+
+   * b: vector overwritten with the result
+"""
+function smallmatTvec!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
+# currently this doesn't call BLAS for the complex-real case, so its ok to
+# pass a ContiguousView to At_mul_B
+  m, n = size(A)
+
+  if m*n <= 65
+    smallmatTvec_kernel!(A, x, b)
+  else
+    At_mul_B!(b, A, x)
+  end
+
+  return b
+end
+
 
 # do A.'*x = b
-function smallmatTvec!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
+function smallmatTvec_kernel!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
   (m,n) = size(A)
   xm = length(x)
   bm = length(b)
@@ -158,6 +268,7 @@ function smallmatTvec!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
   return b
 end
 
+
 function smallmatTvec{T, T2}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1})
 
   (m,n) = size(A)
@@ -166,20 +277,84 @@ function smallmatTvec{T, T2}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1})
   smallmatTvec!(A, x, b)
 end
 
+#------------------------------------------------------------------------------
+# matrix-matrix multiply
 
+"""
+  Performs a matrix-matrix multiply.  Uses a special algorithm for small
+  matrices, otherwise calls BLAS (when possible).
+
+  **Inputs**
+
+   * A: first matrix
+   * x: second matrix
+
+  **Inputs/Inputs**
+
+   * x: output matrix, overwritten
+
+   Aliasing restrictions: no aliasing allowed
+"""
 function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, 
                                  x::AbstractArray{T2, 2}, 
                                  b::AbstractArray{T3, 2})
-#  m, n = size(A)
-#  if m < 6 && n < 9
+  m, n = size(A)
+  if m < 6 && n < 9
     smallmatmat_kernel!(A, x, b)
-#  else
-#    A_mul_B!(b, A, x)
-#  end
+  else
+    A_mul_B!(b, A, x)
+  end
 
   return b
 end
 
+# don't call BLAS when reinterpret isn't supported
+
+function smallmatmat!{T2}(A::ContiguousView{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmat_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmat!{T2}(A::AbstractArray{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmat_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmat!{T2}(A::ContiguousView{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::AbstractArray{Complex128, 2})
+
+  smallmatmat_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmat!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmat_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmat!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::AbstractArray{Complex128, 2})
+
+  smallmatmat_kernel!(A, x, b)
+
+  return b
+end
+ 
 function smallmatmat_kernel!{T, T2, T3}(A::AbstractArray{T, 2}, 
                                  x::AbstractArray{T2, 2}, 
                                  b::AbstractArray{T3, 2})
@@ -228,17 +403,83 @@ function smallmatmat{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
   smallmatmat!(A, x, b)
 end
 
+#------------------------------------------------------------------------------
+# matrix-matrix transposed multiplication
+
+
+"""
+  Performs A*(x.') = b.  Uses a special algorithm for small matrices,
+  otherwise calls BLAS
+
+  **Inputs**
+
+   * A: the first matrix
+   * x: the matrix to be transposed
+
+  **Inputs/Outputs**
+
+   * b: output matrix, overwritten
+"""
 function smallmatmatT!{T, T2, T3}(A::AbstractArray{T, 2},
                                   x::AbstractArray{T2, 2},
                                   b::AbstractArray{T3, 2})
-#  m, n = size(A)
-#  if m < 7 && n < 10
+  m, n = size(A)
+  if m < 7 && n < 10
     smallmatmatT_kernel!(A, x, b)
-#  else
-#    A_mul_Bt!(b, A, x)
-#  end
+  else
+    A_mul_Bt!(b, A, x)
+  end
+
+  return b
 end
 
+# don't call BLAS when reinterpret isn't supported
+
+function smallmatmatT!{T2}(A::ContiguousView{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmatT_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmatT!{T2}(A::AbstractArray{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmatT_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmatT!{T2}(A::ContiguousView{Complex128, 2}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::AbstractArray{Complex128, 2})
+
+  smallmatmatT_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmatT!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::ContiguousView{Complex128, 2})
+
+  smallmatmatT_kernel!(A, x, b)
+
+  return b
+end
+ 
+function smallmatmatT!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
+                                 x::AbstractArray{T2, 2}, 
+                                 b::AbstractArray{Complex128, 2})
+
+  smallmatmatT_kernel!(A, x, b)
+
+  return b
+end
+ 
 function smallmatmatT_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
                                   x::AbstractArray{T2, 2},
                                   b::AbstractArray{T3, 2})
@@ -288,8 +529,42 @@ function smallmatmatT{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
   smallmatmatT!(A, x, b)
 end
 
+#------------------------------------------------------------------------------
+# matrix transposed-matrix multiply
+
+"""
+  Performs A.'*x = b.  Uses a special algorithm for small matrices, otherwise
+  calls BLAS
+
+  **Inputs**
+
+   * A: the matrix to be transposed
+   * x: the second matrix
+
+  **Inputs/Outputs**
+
+   * b: output matrix, overwritten
+
+  Aliasing restrictions: no aliasing
+"""
+function smallmatTmat!{T, T2, T3}(A::AbstractMatrix{T},
+                                         x::AbstractMatrix{T2},
+                                         b::AbstractMatrix{T3})
+  m, n = size(A)
+  if m < 10 && n < 7
+    smallmatTmat_kernel!(A, x, b)
+  else
+    At_mul_B!(b, A, x)
+  end
+
+  return b
+end
+
+# this doesn't call BLAS in the Complex128-Float64 case, so no need to deal
+# with reinterpret issues
+
 #TODO: performance test
-function smallmatTmat!{T, T2, T3}(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
+function smallmatTmat_kernel!{T, T2, T3}(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
                                   b::AbstractMatrix{T3})
 
   n, m = size(A)
