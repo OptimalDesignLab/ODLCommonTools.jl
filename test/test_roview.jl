@@ -48,5 +48,14 @@ facts("----- Testing ROView -----") do
     @fact bytes_alloc --> less_than(100)
   end
 
+  # test reinterpert
+  A = rand(9, 9)
+  Av = unsafe_view(A, 6:9, 1)
+
+  Av2 = reinterpret(Complex128, Av, (2, 1))
+
+  @fact Av2[1] --> Complex128(Av[1], Av[2])
+  @fact Av2[2] --> Complex128(Av[3], Av[4])
+
 end
 

@@ -403,8 +403,8 @@ end
 
 
 
-include("misc.jl")
 include("sparse.jl")
 include("eqn_copy.jl")
 include("ro_view.jl")
+include("misc.jl")
 end     # module
