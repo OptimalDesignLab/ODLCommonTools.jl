@@ -21,6 +21,7 @@
 
 facts("--- Testing misc.jl ---") do
 
+  # test mat-vec
   A = rand(3,3)
   x = rand(3)
   b = A*x
@@ -78,10 +79,163 @@ facts("--- Testing misc.jl ---") do
 
   @fact norm(jac - jac2) --> roughly(0.0, atol=1e-13)
 
+  # test reinterper-BLAS interaction
+
+  println("testing BLAS fallbacks")
+  for d=2:20  # size of arrays
+    A = rand(Complex128, d, d, 1)
+    Av = unsafe_view(A, :, :, 1)
+    
+    x = rand(d, 1)
+    xv = unsafe_view(x, :, 1)
+#    xv = x[:, 1]
+
+    b = zeros(Complex128, d, 1)
+    bv = unsafe_view(b, :, 1)
+#    bv = b[:, 1]
+
+    # test unsafe_view
+    smallmatvec!(Av, xv, bv)
+
+    b2 = A[:, :, 1]*x[:, 1]
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    # test safe view
+    Av2 = view(A, :, :, 1)
+    xv2 = view(x, :, 1)
+    bv2 = view(b, :, 1)
+
+    smallmatvec!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # check mixed argument types
+    b3 = zeros(b2)
+    smallmatvec!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), ROView(xv), bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test transposed mat-vec
+    b2 = A[:, :, 1].'*x[:, 1]
+
+    smallmatTvec!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatTvec!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+  end
 
 
+  # test mat-mat 
+  for d=2:20  # size of arrays
+    A = rand(Complex128, d, d, 1)
+    Av = unsafe_view(A, :, :, 1)
+    
+    x = rand(d, d, 1)
+    xv = unsafe_view(x, :, :, 1)
+#    xv = x[:, 1]
 
-  
+    b = zeros(Complex128, d, d, 1)
+    bv = unsafe_view(b, :, :, 1)
+#    bv = b[:, 1]
+
+    b2 = A[:, :, 1]*x[:, :, 1]
+
+    smallmatmat!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    # test safe view
+    Av2 = view(A, :, :, 1)
+    xv2 = view(x, :, :, 1)
+    bv2 = view(b, :, :, 1)
+
+    smallmatmat!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    b3 = zeros(b2)
+
+    smallmatmat!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - bv2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test mat-matT
+    b2 = A[:, :, 1]*x[:, :, 1].'
+    smallmatmatT!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    b3 = zeros(b2)
+    smallmatmatT!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test matT-mat
+    b2 = A[:, :, 1].'*x[:, :, 1]
+
+    smallmatTmat!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatTmat!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+  end
+
 
   A = rand(4, 4)
   x = rand(4, 2)
@@ -115,7 +269,6 @@ facts("--- Testing misc.jl ---") do
   x = rand(4, 7)
   b = zeros(7, 4)
   b2 = A*(x.')
-  println("b2 = ", b2)
   smallmatmatT!(A, x, b)
   b3 = smallmatmatT(A, x)
   @fact b --> roughly(b2, atol=1e-14)

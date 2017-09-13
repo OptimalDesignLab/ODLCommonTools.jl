@@ -1,6 +1,7 @@
 using ODLCommonTools
 #using Base.Test
 using FactCheck
+using ArrayViews
 
 facts("----- Testing Interface and Boundary -----") do
 # write your own tests here
