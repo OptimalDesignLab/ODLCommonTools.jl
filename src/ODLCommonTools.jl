@@ -20,6 +20,7 @@ export Boundary
 export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
 export calcNorm, calcDiffElementArea
+export functorThatErrors, functorThatErrors_revm
 
 # topo.jl
 export ElementTopology3, ElementTopology2, ElementTopology
@@ -400,6 +401,63 @@ else
   global const sview = ArrayViews.unsafe_view
 end
 
+@doc """
+### ODLCommonTools.functorThatErrors
+
+  This functor will error.
+
+  It is intended to be used to initialize functor fields in eqn to some value 
+    so that eqn_deepcopy can operate upon them.
+
+  This should never be called; if it is called, then the field of eqn has not been
+    properly defined for its desired usage.
+
+  Inputs: none
+  Outputs: none
+
+"""->
+type functorThatErrors <: FluxType
+end
+
+function call{Tsol, Tres, Tmsh}(obj::functorThatErrors, params::AbstractParamType,
+              uL::AbstractArray{Tsol,1},
+              uR::AbstractArray{Tsol,1},
+              aux_vars::AbstractVector{Tres},
+              nrm::AbstractVector{Tmsh},
+              F::AbstractVector{Tres})
+
+  error("Default functor has been called. You have not properly initialized something.")
+  return nothing
+end
+
+@doc """
+### ODLCommonTools.functorThatErrors_revm
+
+  This functor will error.
+
+  It is intended to be used to initialize functor fields in eqn to some value 
+    so that eqn_deepcopy can operate upon them.
+
+  This should never be called; if it is called, then the field of eqn has not been
+    properly defined for its desired usage.
+
+  Inputs: none
+  Outputs: none
+
+"""->
+type functorThatErrors_revm <: FluxType_revm
+end
+
+function call{Tsol, Tres, Tmsh}(obj::functorThatErrors_revm, params::AbstractParamType,
+              uL::AbstractArray{Tsol,1},
+              uR::AbstractArray{Tsol,1},
+              aux_vars::AbstractVector{Tres},
+              nrm::AbstractVector{Tmsh},
+              F::AbstractVector{Tres})
+
+  error("Default functor has been called. You have not properly initialized something.")
+  return nothing
+end
 
 
 
