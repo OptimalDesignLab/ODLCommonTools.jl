@@ -462,7 +462,8 @@ end
 
 
 include("sparse.jl")
-include("eqn_copy.jl")
+include("eqn_deepcopy.jl")
 include("ro_view.jl")
 include("misc.jl")
+include("getAllTypeParams.jl")
 end     # module
