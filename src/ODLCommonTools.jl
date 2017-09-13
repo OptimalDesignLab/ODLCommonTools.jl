@@ -28,6 +28,9 @@ export ElementTopology3, ElementTopology2, ElementTopology
 # eqn_copy.jl
 export copyForMultistage
 
+# eqn_deepcopy.jl
+export eqn_deepcopy, eqn_deepcopy_fields
+
 export ROView, ro_sview, ROVector, ROMatrix, ROArray
 
 # misc.jl

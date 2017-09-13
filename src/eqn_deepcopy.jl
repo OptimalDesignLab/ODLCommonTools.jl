@@ -10,10 +10,10 @@ end
 =#
 
 """
-  EulerEquationMod.eqn_deepcopy
+  ODLCommonTools.eqn_deepcopy
 
   This function performs a proper deepcopy (unlike julia's builtin deepcopy) 
-    on an Euler equation object.
+    on an equation object.
   It preserves reference topology (i.e. q & q_vec pointing to same array in DG schemes).
 
     Inputs:
@@ -33,25 +33,39 @@ end
       this is because 'a[3] =' is actually setindex!
 
 """
-
-function eqn_deepcopy{Tmsh, Tsol, Tres, Tdim}(eqn::AbstractSolutionData{Tsol, Tres, Tdim}, mesh::AbstractMesh{Tmsh}, sbp::AbstractSBP, opts::Dict)
+function eqn_deepcopy{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh}, sbp, eqn::AbstractSolutionData{Tsol, Tres}, opts::Dict)
 
   # The eqn object has over 100 fields, so it is necessary to write a better approach for 
   #   copying than explicitly copying every named field
   # This is the second write of eqn_deepcopy; the first version explicitly copied each field. 
   #   Was done for SimpleODE and Advection before Euler made it obvious that that was intractable.
 
-  # 1: call constructor on eqn_copy
+  error("eqn_deepcopy fallback reached. A physics-specific method should be defined.")
+ 
+  return nothing
 
-  if typeof(eqn) == EulerData_
-    var_type = opts["variable_type"]
-    eqn_copy = EulerData_{Tsol, Tres, Tdim, Tmsh, var_type}(mesh, sbp, opts)
-  elseif typeof(eqn) == AdvectionData_
-    eqn_copy = AdvectionData_{Tsol, Tres, Tdim, Tmsh}(mesh, sbp, opts)
-  elseif typeof(eqn) == SimpleODEData_
-    eqn_copy = SimpleODEData_{Tsol, Tres, Tdim, Tmsh}(mesh, sbp, opts)
-  end
+end
 
+"""
+  ODLCommonTools.eqn_deepcopy_fields
+
+  This function is physics-agnostic and copies over all fields.
+
+    Inputs:
+      mesh
+      sbp
+      eqn
+      eqn_copy
+      opts
+
+    Outputs:
+      eqn_copy
+
+"""
+function eqn_deepcopy_fields{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh}, sbp, 
+                                               eqn::AbstractSolutionData{Tsol, Tres},
+                                               eqn_copy::AbstractSolutionData{Tsol, Tres},
+                                               opts::Dict)
   # 2: copy over fields
 
   for fdnm in fieldnames(eqn)    # loop over first level fieldnames in eqn
