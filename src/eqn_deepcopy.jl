@@ -33,7 +33,8 @@ end
       this is because 'a[3] =' is actually setindex!
 
 """
-function eqn_deepcopy{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh}, sbp, eqn::AbstractSolutionData{Tsol, Tres}, opts::Dict)
+# function eqn_deepcopy{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh}, sbp, eqn::AbstractSolutionData{Tsol, Tres}, opts::Dict)
+function eqn_deepcopy(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData, opts::Dict)
 
   # The eqn object has over 100 fields, so it is necessary to write a better approach for 
   #   copying than explicitly copying every named field
@@ -62,10 +63,8 @@ end
       eqn_copy
 
 """
-function eqn_deepcopy_fields{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh}, sbp, 
-                                               eqn::AbstractSolutionData{Tsol, Tres},
-                                               eqn_copy::AbstractSolutionData{Tsol, Tres},
-                                               opts::Dict)
+function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
+                             eqn_copy::AbstractSolutionData, opts::Dict)
   # 2: copy over fields
 
   for fdnm in fieldnames(eqn)    # loop over first level fieldnames in eqn
