@@ -36,6 +36,9 @@ export ROView, ro_sview, ROVector, ROMatrix, ROArray
 # misc.jl
 export prepend_path, append_path
 
+# io.jl
+export write_binary, read_binary!
+
 #export sview  # don't export this to make the change not completely breaking
 
 """
@@ -467,6 +470,7 @@ end
 include("sparse.jl")
 include("eqn_deepcopy.jl")
 include("ro_view.jl")
+include("io.jl")
 include("misc.jl")
 include("getAllTypeParams.jl")
 end     # module

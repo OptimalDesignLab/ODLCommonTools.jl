@@ -3,7 +3,7 @@
 # only work for arrays (needs to be subtype of DenseArray in order 
 # to call BLAS functions
 
-typealias ROTypes{T, N}  Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
+typealias ContiguousArrays{T, N}  Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
 
 """
   A read only wrapper type for AbstractArrays. getindex is defined for
@@ -12,7 +12,7 @@ typealias ROTypes{T, N}  Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguo
 immutable ROView{T, N, P <: AbstractArray} <: DenseArray{T, N}
   parent::P
 
-  function ROView(a::ROTypes)
+  function ROView(a::ContiguousArrays)
     return new(a)
   end
 end
@@ -20,7 +20,7 @@ end
 """
   Outer constructor
 """
-function ROView{T, N}(A::ROTypes{T, N})
+function ROView{T, N}(A::ContiguousArrays{T, N})
   return ROView{T, N, typeof(A)}(A)
 end
 
