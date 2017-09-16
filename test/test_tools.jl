@@ -551,6 +551,10 @@ facts("--- Testing misc.jl ---") do
   fname2 = get_parallel_fname(fname, 1)
   @fact fname2 --> "abc_1.dat"
 
+  fname = "abc"
+  fname2 = get_parallel_fname(fname, 1)
+  @fact fname2 --> "abc_1"
+
   # test append_path, prepend_path
   pth = ""
   new_entry = "/dir1/dir2"

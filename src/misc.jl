@@ -1012,6 +1012,10 @@ end
   is an MPI communicator rank, to the end of the name, before the extension.
   For example, foo.dat -> foo_0.dat
 
+  Also works if the file name does not have an extension:
+
+  foo -> foo_0.dat
+
   Inputs:
     fname: original file name, including extension
     comm_rank: communicator rank
@@ -1030,13 +1034,13 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
     end
   end
 
-  if sep_loc == 0
-    throw(ErrorException("Filename does not contain an extension"))
+  if sep_loc == 0  # fname does not have an extension
+    fname_stub = string(fname, "_", comm_rank)
+  else
+    fname_stub = fname[1:(sep_loc-1)]  # grab the name before the extension
+    fname_stub *= "_$comm_rank"  # add the comm_rank
+    fname_stub *= fname[sep_loc:end]
   end
-
-  fname_stub = fname[1:(sep_loc-1)]  # grab the name before the extension
-  fname_stub *= "_$comm_rank"  # add the comm_rank
-  fname_stub *= fname[sep_loc:end]
 
   return fname_stub
 end

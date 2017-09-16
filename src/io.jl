@@ -64,4 +64,33 @@ function read_binary!{T}(fname::AbstractString, arr::ContiguousArrays{T})
 
 end
 
+"""
+  This function writes the solution vector (eqn.qvec) to a file.
+  The path to the file must already exist.  If the file already exists, it
+  will be overwritten.
+
+  **Inputs**
+
+   * mesh: an AbstractMesh
+   * sbp: an AbstractSBP
+   * eqn: an AbstractSolutionData
+   * opts: options dictionary
+   * fname: file name, without extension.  Can be absolute or relative path.
+            In parallel, the file name should *not* contain the MPI rank.
+
+"""
+function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
+                            opts, fname::AbstractString)
+
+
+  # create parallel file name
+  
+  # add extension
+
+  # call write_binary
+ 
+  return nothing
+end
+
+#TODO: create a CheckPointer type and functions that manage it
 
