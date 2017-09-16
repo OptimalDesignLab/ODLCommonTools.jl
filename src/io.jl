@@ -65,9 +65,12 @@ function read_binary!{T}(fname::AbstractString, arr::ContiguousArrays{T})
 end
 
 """
-  This function writes the solution vector (eqn.qvec) to a file.
+  This function writes the solution vector (eqn.q_vec) to a file.
   The path to the file must already exist.  If the file already exists, it
   will be overwritten.
+
+  This function should be used as though it is collective on mesh.comm,
+  although the current implementation may or may not require it.
 
   **Inputs**
 
@@ -76,7 +79,8 @@ end
    * eqn: an AbstractSolutionData
    * opts: options dictionary
    * fname: file name, without extension.  Can be absolute or relative path.
-            In parallel, the file name should *not* contain the MPI rank.
+            In parallel, the file name should *not* contain the MPI rank
+            (this function will add it internally)
 
 """
 function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
@@ -84,13 +88,51 @@ function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
 
 
   # create parallel file name
+  fname = get_parallel_fname(fname, mesh.comm_rank)
   
   # add extension
+  fname = string(fname, ".dat")
 
   # call write_binary
+  write_binary(fname, eqn.q_vec)
  
   return nothing
 end
 
+"""
+  This function reads the files written by [`writeSolutionFiles`](@ref)
+ 
+  This function should be used as though it is collective on mesh.comm,
+  although the current implementation may or may not require it.
+
+ 
+  **Inputs**
+
+   * mesh: an AbstractMesh
+   * sbp: an AbstractSBP
+   * opts: options dictionary
+   * fname: file name, without extension.  Can be absolute or relative path.
+            In parallel, the file name should *not* contain the MPI rank
+
+  **Inputs/Outputs**
+
+   * eqn: AbstractSolutionData object. eqn.q_vec is overwritten
+"""
+function readSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
+                            opts, fname::AbstractString)
+
+
+  # create parallel file name
+  fname = get_parallel_fname(fname, mesh.comm_rank)
+  
+  # add extension
+  fname = string(fname, ".dat")
+
+  # call write_binary
+  read_binary!(fname, eqn.q_vec)
+
+  return nothing
+end
+ 
 #TODO: create a CheckPointer type and functions that manage it
 
