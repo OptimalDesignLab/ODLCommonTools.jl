@@ -106,6 +106,16 @@ abstract AbstractParamType{Tdim}
 """->
 typealias Abstract3DArray{T} AbstractArray{T, 3}
 
+"""
+Abstract supertype of all SharedFaceData implemenations, used to storing
+the data needed for parallel communication
+
+  **Static Parameters**
+
+   * Tsol: the datatype of the solution variables
+"""
+abstract AbstractSharedFaceData{Tsol}
+
 @doc """
 ### ODLCommonTools.AbstractOptimizationData
 
@@ -466,7 +476,7 @@ function call{Tsol, Tres, Tmsh}(obj::functorThatErrors_revm, params::AbstractPar
 end
 
 
-
+include("types.jl")
 include("sparse.jl")
 include("eqn_deepcopy.jl")
 include("ro_view.jl")

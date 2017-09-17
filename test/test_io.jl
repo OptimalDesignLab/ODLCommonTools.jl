@@ -19,4 +19,8 @@ facts("----- Testing IO -----") do
   @fact_throws write_binary(fname, q)
   @fact_throws read_binary!(fname, q)
 
+  opts = Dict{Any, Any}()
+  mesh = ODLCommonTools.ConcreteDGMesh{Float64}(opts)
+  sbp = ODLCommonTools.ConcreteSBP()
+  eqn = ODLCommonTools.ConcreteSolutionData{Float64, Float64}(mesh, sbp, opts)
 end
