@@ -94,6 +94,9 @@ abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
    the AbstractSolutionData might not be passed (depending on the organization 
    of the physics module.
 
+  **Static Parameters**:
+   
+   * Tdim: the dimensionality of the equation being solved (2d or 3d usually)
 """
 abstract AbstractParamType{Tdim}
 
