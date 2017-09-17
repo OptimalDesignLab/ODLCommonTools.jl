@@ -128,9 +128,6 @@ type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
     mesh.interfaces = [Interface(2, 3, 2, 3, 0), Interface(4, 7, 1, 3, 2)]
 
     mesh.dofs = Array(Int, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
-    println("numDof = ", mesh.numDof)
-    println("size(mesh.dofs) = ", size(mesh.dofs))
-
     for i=1:mesh.numDof
       mesh.dofs[i] = i
     end

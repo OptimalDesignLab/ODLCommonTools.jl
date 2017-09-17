@@ -37,7 +37,7 @@ export ROView, ro_sview, ROVector, ROMatrix, ROArray
 export prepend_path, append_path
 
 # io.jl
-export write_binary, read_binary!
+export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 
 #export sview  # don't export this to make the change not completely breaking
 
