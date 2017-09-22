@@ -133,6 +133,3 @@ function readSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
 
   return nothing
 end
- 
-#TODO: create a CheckPointer type and functions that manage it
-

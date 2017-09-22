@@ -13,7 +13,7 @@ import Base.isless
 import Base.copy
 import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray
-export AbstractMesh, AbstractCGMesh, AbstractDGMesh
+export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
 export Boundary, Interface, getElementL, getFaceL
 export AbstractOptimizationData
 export Boundary

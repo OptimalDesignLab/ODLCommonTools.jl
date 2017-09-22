@@ -573,5 +573,8 @@ facts("--- Testing misc.jl ---") do
   new_pth = prepend_path(pth, new_entry)
   @fact new_pth --> "/dir1/dir2:/dir0"
 
+  str = joinpath_ascii(pwd(), "hello")
+  @fact str --> joinpath(pwd(), "hello")
+
 
 end

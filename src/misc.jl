@@ -9,7 +9,8 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
-        getBranchName, getTimeString, isFieldDefined, get_parallel_fname
+        getBranchName, getTimeString, isFieldDefined, get_parallel_fname,
+        joinpath_ascii
 
 @doc """
  ### Tools rmfile
@@ -1043,6 +1044,14 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
   end
 
   return fname_stub
+end
+
+"""
+  Wrapper around joinpath() that always returns an ASCIIString.
+"""
+function joinpath_ascii(str::ASCIIString...)
+
+  return ASCIIString(joinpath(str...))
 end
 
 """
