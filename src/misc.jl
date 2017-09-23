@@ -1033,6 +1033,9 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
     if fname[i] == '.'
       sep_loc = i
     end
+    if fname[i] == '/'  # linux only
+      break
+    end
   end
 
   if sep_loc == 0  # fname does not have an extension

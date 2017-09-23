@@ -89,7 +89,6 @@ function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
 
   # create parallel file name
   fname = get_parallel_fname(fname, mesh.myrank)
-  
   # add extension
   fname = string(fname, ".dat")
 
