@@ -33,7 +33,7 @@ function write_binary{T}(fname::AbstractString, arr::ContiguousArrays{T})
 end
 
 """
-  Reads files written by [`write_binary1}(@ref)
+  Reads files written by [`write_binary`](@ref).
 
   **Inputs**
 
@@ -43,6 +43,13 @@ end
 
    * arr: array to be populated with the contents of the file.  The array
           must be the same size as the file.
+
+
+  Implementation notes:
+
+    The load will succeed as long as the array is the same size as the file,
+    even if the datatype is different.
+
 """
 function read_binary!{T}(fname::AbstractString, arr::ContiguousArrays{T})
 
@@ -81,7 +88,6 @@ end
    * fname: file name, without extension.  Can be absolute or relative path.
             In parallel, the file name should *not* contain the MPI rank
             (this function will add it internally)
-
 """
 function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
                             opts, fname::AbstractString)
@@ -115,7 +121,11 @@ end
 
   **Inputs/Outputs**
 
-   * eqn: AbstractSolutionData object. eqn.q_vec is overwritten
+   * eqn: eqn.q_vec is overwritten with the data loaded from the file.
+          The vector must be the same length and have the same element type
+          as the vector that was saved to the file.  No error is given if
+          these conditions are not met
+   
 """
 function readSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
                             opts, fname::AbstractString)
