@@ -69,6 +69,10 @@ function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
 
   for fdnm in fieldnames(eqn)    # loop over first level fieldnames in eqn
 
+    if fdnm == :file_dict
+      setfield!(eqn_copy, fdnm, getfield(eqn, fdnm))
+    end
+
     fdnm_type = typeof(getfield(eqn, fdnm))    # get the super type of the current field
 
     # ------- handle params
