@@ -48,6 +48,48 @@ function get_uninitialized_SolutionData(eqn::AbstractSolutionData_)
 end
 
 
+facts("--- Testing copy_array_recursive ---") do
+
+  # test single level
+  arr = rand(5)
+  arr_dest = zeros(5)
+  ODLCommonTools.copy_array_recursive!(arr_dest, arr)
+  @fact norm(arr_dest - arr) --> roughly(0.0, atol=1e-14)
+
+  # test two levels
+  arr = Array(Array{Float64, 2}, 2)
+  arr_dest = Array(Array{Float64, 2}, 2)
+  for i=1:2
+    arr[i] = rand(i+2, i+2)
+    arr_dest[i] = zeros(i+2, i+2)
+  end
+
+  ODLCommonTools.copy_array_recursive!(arr_dest, arr)
+  for i=1:2
+    @fact norm(arr_dest[i] - arr[i]) --> roughly(0.0, atol=1e-14)
+  end
+
+  # test three levels
+  arr = Array(Array{Array{Float64, 1}, 1}, 2)
+  arr_dest = Array(Array{Array{Float64, 1}, 1}, 2)
+  for i=1:2
+    arr[i] = Array(Array{Float64, 1}, 2)
+    arr_dest[i] = Array(Array{Float64, 1}, 2)
+    for j=1:2
+      arr[i][j] = rand(3)
+      arr_dest[i][j] = zeros(3)
+    end
+  end
+
+  ODLCommonTools.copy_array_recursive!(arr_dest, arr)
+  for i=1:2
+    for j=1:2
+      @fact norm(arr_dest[i][j] - arr[i][j]) --> roughly(0.0, atol=1e-14)
+    end
+  end
+
+end
+
 facts("--- Testing copy functions ---") do
 
   num_inner_arrays = 3
@@ -126,9 +168,19 @@ facts("--- Testing copy functions ---") do
   @fact_throws test_data_dest = copy(test_data)
 
   #---------------
-  # testing copyForMultistage
+  # testing copyForMultistage!
   # use multistage copy eqn1 to eqn2, then write to eqn1, check that eqn2 fields are changed or unchanged as appropriate
-  test_data_copy = copyForMultistage(test_data)
+  fill!(test_data.q, 0.0)
+  fill!(test_data.q_vec, 0.0)
+  fill!(test_data.res, 0.0)
+  fill!(test_data.res_vec, 0.0)
+  for i=1:length(test_data.shared_data)
+    fill!(test_data.shared_data[i], 0.0)
+  end
+  test_data.unhandled_field = 17.0
+  copyForMultistage!(test_data, test_data_rand)
+
+#  test_data_copy = copyForMultistage!(test_data)
   @fact test_data.q --> roughly(test_data_rand.q, atol=1e-14)
   @fact test_data.q_vec --> roughly(test_data_rand.q_vec, atol=1e-14)
   @fact test_data.res --> roughly(test_data_rand.res, atol=1e-14)
@@ -142,6 +194,12 @@ facts("--- Testing copy functions ---") do
 #   println(test_data_rand.unhandled_field)
   @fact test_data.unhandled_field --> not(roughly(test_data_rand.unhandled_field, atol=1e-14))
 
+  # verfy no aliasing
+  @fact pointer(test_data.q) --> not( pointer(test_data_rand.q) )
+  @fact pointer(test_data.shared_data) --> not( pointer(test_data_rand.q) )
+  for i=1:length(test_data.shared_data)
+    @fact pointer(test_data.shared_data[i]) --> not( pointer(test_data_rand.shared_data[i]))
+  end
 #   println(test_data)
 #   println(test_data_copy)
 
