@@ -108,7 +108,6 @@ function copy!(eqn_copy::AbstractSolutionData, eqn::AbstractSolutionData)
   # 2: copy over fields
 
   for fdnm in fieldnames(eqn)    # loop over first level fieldnames in eqn
-    println("fieldname = ", fdnm)
 
     if fdnm == :file_dict
       setfield!(eqn_copy, fdnm, getfield(eqn, fdnm))
@@ -136,7 +135,6 @@ function copy!(eqn_copy::AbstractSolutionData, eqn::AbstractSolutionData)
           # this does not work: setfield!(getfield(eqn_copy, a), b , getfield(getfield(eqn, a),b))
           #   must use copy, or else changing eqn's value changes eqn_copy
           copy!(getfield(params_copy, fdnm_lvl2), getfield(params, fdnm_lvl2))
-#          setfield!(params_copy, fdnm_lvl2, copy(getfield(params, fdnm_lvl2)))
 
           # Note: this is assuming that there are no Arrays of Arrays inside 
           #       an eqn.params (or params_entropy, etc)
@@ -156,51 +154,7 @@ function copy!(eqn_copy::AbstractSolutionData, eqn::AbstractSolutionData)
 
       arr_copy = getfield(eqn_copy, fdnm)
       arr = getfield(eqn, fdnm)
-
       copy_array_recursive!(arr_copy, arr)
-#=
-      # -------- handle array of arrays
-      # if this is an Array of Arrays; ex: eqn.q_face_send
-      if issubtype(eltype(arr), AbstractArray)
-
-        # we only support 2 levels of nested arrays
-        @assert !(eltype(arr) <: AbstractArray)
-
-        # first copy the outer array
-        # copy is required here, as the innermost object is an array
-#        setfield!(eqn_copy, fdnm, copy(getfield(eqn, fdnm)))
-
-        for i=1:length(arr)
-          copy!(arr_copy[i], arr[i])
-        end
-#=
-        # then loop over array and copy all elements, which are each an array
-        for i = 1:length(getfield(eqn, fdnm))
-
-          setindex!(getfield(eqn_copy, fdnm), getindex(getfield(eqn, fdnm), i), i)
-
-        end   # end of loop over elements (each an array) of the 1st level field, which is of type array
-=#
-      else      # if this a simple Array; ex: eqn.q
-
-        copy!(arr_copy, arr)
-#=
-        # handle special case of q_vec and res_vec needing to be reshaped in DG case
-        if mesh.isDG && (fdnm == :q_vec)
-
-          eqn_copy.q_vec = reshape(eqn_copy.q, mesh.numDof)
-
-        elseif mesh.isDG && (fdnm == :res_vec)
-
-          eqn_copy.res_vec = reshape(eqn_copy.res, mesh.numDof)
-
-        else
-          # copy is required here, as the innermost object is an array
-          setfield!(eqn_copy, fdnm, copy(getfield(eqn, fdnm)))
-        end
-=#
-      end
-=#
     else        # handle non-arrays
 
       # copy is not defined for many of these non-array types: use assignment

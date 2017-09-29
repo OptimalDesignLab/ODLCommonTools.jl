@@ -183,15 +183,6 @@ function copy(eqn_src::AbstractSolutionData)
 
 end
 
-# TODO docstring
-function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
-
-  throw(ErrorException("get_uninitialized_SolutionData not defined for AbstractSolutionData, must use concrete type"))
-
-  return nothing
-  
-end
-
 @doc """
 ### ODLCommonTools.Boundary
 
