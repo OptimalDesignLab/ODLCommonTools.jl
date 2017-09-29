@@ -48,26 +48,67 @@ function eqn_deepcopy(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData, opts::
 end
 
 """
+  This function copies the data from one array of arrays to another array
+  of arrays with the same structure.  It recurses down to the deepest array
+  (whose element type is not a subtype of AbstractArray) and calls copy! on it.
+
+  **Inputs**
+
+   * src: an AbstractArray (possibly an array of arrays)
+
+  **Inputs/Outputs**
+
+   * dest: an AbstractArray (must be similar to src)
+
+  Note that this function will not work correctly if any array (including
+  the nested ones) has an element type of Any.
+
+  Aliasing: aliasing is allowed, however cycles in the recursion tree are not
+            allowed.  This function does not attempt to handle this case, and
+            it will likely result in a StackOverflow error.
+"""
+function copy_array_recursive!{Td <: AbstractArray, Ts <: AbstractArray}(dest::AbstractArray{Td}, src::AbstractArray{Ts})
+
+  @assert length(dest) == length(src)
+
+  for i=1:length(src)
+    # if the element type of src[i] is an AbstractArray, call this method
+    # again, otherwise call the other method
+    copy_array_recursive!(dest[i], src[i])
+  end
+
+  return nothing
+end
+
+function copy_array_recursive!{Td, Ts}(dest::AbstractArray{Td},
+                                        src::AbstractArray{Ts})
+
+  copy!(dest, src)
+
+  return nothing
+end
+
+"""
   ODLCommonTools.eqn_deepcopy_fields
 
   This function is physics-agnostic and copies over all fields.
+  It assumes the fields of the destination object are already initialized
+  and (in the case of arrays) the right size.
 
-    Inputs:
-      mesh
-      sbp
-      eqn
-      eqn_copy
-      opts
+    **Inputs**:
 
-    Outputs:
-      eqn_copy
+     * eqn
+
+    **Outputs:**
+      
+     * eqn_copy
 
 """
-function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
-                             eqn_copy::AbstractSolutionData, opts::Dict)
+function copy!(eqn_copy::AbstractSolutionData, eqn::AbstractSolutionData)
   # 2: copy over fields
 
   for fdnm in fieldnames(eqn)    # loop over first level fieldnames in eqn
+    println("fieldname = ", fdnm)
 
     if fdnm == :file_dict
       setfield!(eqn_copy, fdnm, getfield(eqn, fdnm))
@@ -78,33 +119,32 @@ function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
     # ------- handle params
     # if this first level fieldname is of type ParamType; ex: eqn.params
     if issubtype(fdnm_type, AbstractParamType)
+      params_copy = getfield(eqn_copy, fdnm)
+      params = getfield(eqn, fdnm)
 
       # loop over eqn.params, eqn.params_conservative, or eqn.params_entropy
       # println(" is a subtype of AbstractParamType, fdnm: ", fdnm)
 
-      for fdnm_lvl2 in fieldnames(getfield(eqn, fdnm))      # loop over 2nd level fieldnames
+      for fdnm_lvl2 in fieldnames(params)      # loop over 2nd level fieldnames
 
         # get the super type of the current 2nd level field
-        fdnm_lvl2_type = typeof(getfield(getfield(eqn, fdnm), fdnm_lvl2))
+        fdnm_lvl2_type = typeof(getfield(params, fdnm_lvl2))
 
         # if the 2nd level fieldname is of type Array; ex: eqn.params.q_vals
         if issubtype(fdnm_lvl2_type, AbstractArray)
 
           # this does not work: setfield!(getfield(eqn_copy, a), b , getfield(getfield(eqn, a),b))
           #   must use copy, or else changing eqn's value changes eqn_copy
-          setfield!(getfield(eqn_copy, fdnm), fdnm_lvl2, copy(getfield(getfield(eqn, fdnm), fdnm_lvl2)))
+          copy!(getfield(params_copy, fdnm_lvl2), getfield(params, fdnm_lvl2))
+#          setfield!(params_copy, fdnm_lvl2, copy(getfield(params, fdnm_lvl2)))
 
           # Note: this is assuming that there are no Arrays of Arrays inside 
           #       an eqn.params (or params_entropy, etc)
 
         else            # if the 2nd level fieldname is not of type Array; ex: eqn.params.gamma
 
-          # Debug statements:
-          # println("fdnm: ", fdnm)
-          # println("fdnm_lvl2: ", fdnm_lvl2)
-
           # because copy is not defined for all non-array types, such as functions
-          setfield!(getfield(eqn_copy, fdnm), fdnm_lvl2, getfield(getfield(eqn, fdnm), fdnm_lvl2))
+          setfield!(params_copy, fdnm_lvl2, getfield(params, fdnm_lvl2))
 
         end
 
@@ -114,23 +154,37 @@ function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
     # if this first level fieldname is of type Array; ex: eqn.q or eqn.q_face_send
     elseif issubtype(fdnm_type, AbstractArray)
 
+      arr_copy = getfield(eqn_copy, fdnm)
+      arr = getfield(eqn, fdnm)
+
+      copy_array_recursive!(arr_copy, arr)
+#=
       # -------- handle array of arrays
       # if this is an Array of Arrays; ex: eqn.q_face_send
-      if issubtype(eltype(fdnm_type), AbstractArray)
+      if issubtype(eltype(arr), AbstractArray)
+
+        # we only support 2 levels of nested arrays
+        @assert !(eltype(arr) <: AbstractArray)
 
         # first copy the outer array
         # copy is required here, as the innermost object is an array
-        setfield!(eqn_copy, fdnm, copy(getfield(eqn, fdnm)))
+#        setfield!(eqn_copy, fdnm, copy(getfield(eqn, fdnm)))
 
+        for i=1:length(arr)
+          copy!(arr_copy[i], arr[i])
+        end
+#=
         # then loop over array and copy all elements, which are each an array
         for i = 1:length(getfield(eqn, fdnm))
 
           setindex!(getfield(eqn_copy, fdnm), getindex(getfield(eqn, fdnm), i), i)
 
         end   # end of loop over elements (each an array) of the 1st level field, which is of type array
-
+=#
       else      # if this a simple Array; ex: eqn.q
 
+        copy!(arr_copy, arr)
+#=
         # handle special case of q_vec and res_vec needing to be reshaped in DG case
         if mesh.isDG && (fdnm == :q_vec)
 
@@ -144,9 +198,9 @@ function eqn_deepcopy_fields(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
           # copy is required here, as the innermost object is an array
           setfield!(eqn_copy, fdnm, copy(getfield(eqn, fdnm)))
         end
-
+=#
       end
-
+=#
     else        # handle non-arrays
 
       # copy is not defined for many of these non-array types: use assignment

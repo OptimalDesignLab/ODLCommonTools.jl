@@ -26,7 +26,7 @@ export functorThatErrors, functorThatErrors_revm
 export ElementTopology3, ElementTopology2, ElementTopology
 
 # eqn_copy.jl
-export copyForMultistage
+export copyForMultistage!
 
 # eqn_deepcopy.jl
 export eqn_deepcopy, eqn_deepcopy_fields
@@ -128,12 +128,21 @@ corresponding to optimization problems should be a subtype of this.
 """->
 abstract AbstractOptimizationData
 
-@doc """
+"""
 
-In place copy function for AbstractSolutionData
+  Copies only the essential data from one AbstractSolutionData to another.
 
-"""->
-function copy!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
+  Currently copies:
+    * q
+    * q_vec
+    * res
+    * res_vec
+    * shared_data
+
+  Implementation Notes:
+    Avoids double copying when q and q_vec alias
+"""
+function copyForMultistage!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
 
   copy!(eqn_dest.q, eqn_src.q)
 
@@ -171,48 +180,6 @@ function copy(eqn_src::AbstractSolutionData)
   throw(ErrorException("Use copy!(eqn_dest, eqn_src) for AbstractSolution data, not copy"))
 
   return nothing
-
-end
-
-function copyForMultistage(eqn_src::AbstractSolutionData)
-
-#   eqn_dest = AbstractSolutionData()
-  eqn_dest = get_uninitialized_SolutionData(eqn_src)
-  # println("----- in copyForMultistage")
-
-  fields = fieldnames(typeof(eqn_src))
-
-  for i = 1:length(fields)
-
-    obj = getfield(eqn_src, fields[i])
-    setfield!(eqn_dest, fields[i], obj)
-
-  end
-
-  eqn_dest.q = copy(eqn_src.q)
-  # slight optimization- checking if we need to copy q_vec at all,
-  #   in case q_vec & q point to the same thing
-  if pointer(eqn_src.q) != pointer(eqn_src.q_vec)
-    eqn_dest.q_vec = copy(eqn_src.q_vec)
-  else
-    eqn_dest.q_vec = reshape(eqn_dest.q, size(eqn_src.q_vec)...)
-  end
-
-  # This is needed because we suspect copy! will only work down one level
-  num_inner_arrays = length(eqn_src.shared_data)
-  for i = 1:num_inner_arrays
-    copy!(eqn_dest.shared_data[i], eqn_src.shared_data[i])
-  end
-
-  eqn_dest.res = copy(eqn_src.res)
-  # same slight optimization as above for q & q_vec
-  if pointer(eqn_src.res) != pointer(eqn_src.res_vec)
-    eqn_dest.res_vec = copy(eqn_src.res_vec)
-  else
-    eqn_dest.res_vec = reshape(eqn_dest.res, size(eqn_src.res_vec)...)
-  end
-
-  return eqn_dest
 
 end
 
