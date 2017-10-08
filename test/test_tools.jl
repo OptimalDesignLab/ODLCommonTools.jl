@@ -576,5 +576,20 @@ facts("--- Testing misc.jl ---") do
   str = joinpath_ascii(pwd(), "hello")
   @fact str --> joinpath(pwd(), "hello")
 
+  # test splitting fnames
+  pth = "test.dat"
+  fstem, fext = split_fname(pth)
+  @fact fstem --> "test"
+  @fact fext --> ".dat"
+
+  pth = "test"
+  fstem, fext = split_fname(pth)
+  @fact fstem --> "test"
+  @fact fext --> ""
+
+
+
+
+
 
 end

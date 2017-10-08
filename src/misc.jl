@@ -1050,6 +1050,41 @@ function get_parallel_fname(fname::ASCIIString, comm_rank)
 end
 
 """
+  Returns the file name and extension as separate strings.
+  Ex. output.dat -> output, .dat
+
+  If the file does not have an extension the second string will be empty
+  **Input**
+
+   * fname: file name to split
+
+  **Outputs**
+
+   * fstem: file name, without extension
+   * fext: file extension (including the period)
+"""
+function split_fname(fname::AbstractString)
+
+  sep_loc = 0
+  for i=length(fname):-1:1
+    if fname[i] == '.'
+      sep_loc = i
+    end
+  end
+
+  if sep_loc == 0  # no extension
+    fstem = copy(fname)
+    fext = ""
+  else
+    fstem = fname[1:(sep_loc-1)]
+    fext = fname[sep_loc:end]
+  end
+
+
+  return fstem, fext
+end
+
+"""
   Wrapper around joinpath() that always returns an ASCIIString.
 """
 function joinpath_ascii(str::ASCIIString...)

@@ -34,7 +34,7 @@ export eqn_deepcopy, eqn_deepcopy_fields
 export ROView, ro_sview, ROVector, ROMatrix, ROArray
 
 # misc.jl
-export prepend_path, append_path
+export prepend_path, append_path, split_fname
 
 # io.jl
 export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
@@ -371,7 +371,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.view
 else
