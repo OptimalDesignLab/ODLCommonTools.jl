@@ -39,7 +39,7 @@ export prepend_path, append_path, split_fname
 # io.jl
 export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 
-#export sview  # don't export this to make the change not completely breaking
+export sview  # don't export this to make the change not completely breaking
 
 """
 
