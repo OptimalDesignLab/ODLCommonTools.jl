@@ -39,6 +39,9 @@ export prepend_path, append_path, split_fname
 # io.jl
 export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 
+# lapack.jl
+export getrf!, getrs2!, BlasInt
+
 export sview  # don't export this to make the change not completely breaking
 
 """
@@ -378,6 +381,20 @@ else
   global const sview = ArrayViews.unsafe_view
 end
 
+"""
+  This macro eliminates blocks of code if safe_views is false
+"""
+macro ifsafeview(ex)
+
+  if safe_views
+    return quote
+      $(esc(ex))
+    end
+  else
+    return nothing
+  end
+end  # end macro
+
 @doc """
 ### ODLCommonTools.functorThatErrors
 
@@ -444,4 +461,5 @@ include("ro_view.jl")
 include("io.jl")
 include("misc.jl")
 include("getAllTypeParams.jl")
+include("lapack.jl")
 end     # module
