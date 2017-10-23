@@ -12,10 +12,10 @@ import Base.show
 import Base.isless
 import Base.copy
 import Base.copy!
-export AbstractSolutionData, AbstractParamType, Abstract3DArray
+export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
 export Boundary, Interface, getElementL, getFaceL
-export AbstractOptimizationData
+export AbstractOptimizationData, AbstractIntegralOptimizationData
 export Boundary
 export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
@@ -113,6 +113,11 @@ abstract AbstractParamType{Tdim}
 typealias Abstract3DArray{T} AbstractArray{T, 3}
 
 """
+  A typealias for any 4D array.  Element is the static parameter
+"""
+typealias Abstract4DArray{T} AbstractArray{T, 4}
+
+"""
 Abstract supertype of all SharedFaceData implemenations, used to storing
 the data needed for parallel communication
 
@@ -128,9 +133,26 @@ abstract AbstractSharedFaceData{Tsol}
 Abstract datatype for optimization related data structures. All data types
 corresponding to optimization problems should be a subtype of this.
 
-"""->
-abstract AbstractOptimizationData
+  **Static Parameters**
 
+   * Topt
+
+"""->
+abstract AbstractOptimizationData{Topt}
+
+
+"""
+  Abstract type for integral objective functions.  Any integral objective
+  function should be a subtype of this, which is a subtype ofi
+  [`AbstractOptimizationData`](@ref).
+
+  **Static Parameters**
+
+   * Topt
+
+
+"""
+abstract AbstractIntegralOptimizationData{Topt} <: AbstractOptimizationData{Topt}
 """
 
   Copies only the essential data from one AbstractSolutionData to another.
