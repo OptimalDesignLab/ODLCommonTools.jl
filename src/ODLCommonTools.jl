@@ -40,7 +40,7 @@ export prepend_path, append_path, split_fname
 export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 
 # lapack.jl
-export getrf!, getrs2!, BlasInt
+export getrf!, getrs2!, BlasInt, laswp!
 
 export sview  # don't export this to make the change not completely breaking
 

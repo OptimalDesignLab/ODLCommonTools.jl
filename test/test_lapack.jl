@@ -1,4 +1,5 @@
 import Base.LinAlg.BlasInt
+using Base.LinAlg.BLAS
 
 
 facts("----- Testing Lapack -----") do
@@ -16,5 +17,22 @@ facts("----- Testing Lapack -----") do
   x = copy(b)
   x2 = A2\b2
   @fact norm(x - x2) --> roughly(0.0, atol=1e-13)
+
+  # test getrs2!
+  # test A*x against P*L*U*x
+
+  A = [1.0 2 3; 4 5 6; 8 8 9]
+  x = [1, 2, 3]
+  b = A*x
+  b2 = zeros(b)
+  ipiv = zeros(BlasInt, 3)
+  getrf!(A,ipiv)
+  copy!(b2, x)
+  trmv!('U', 'N', 'N', A, b2)
+  trmv!('L', 'N', 'U', A, b2)
+  laswp!(b2, 1, length(b2), ipiv)
+
+  @fact norm(b2 - b) --> roughly(0.0, atol=1e-12)
+
 
 end

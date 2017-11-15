@@ -71,4 +71,23 @@ function getrs2!(trans::Char, A::ContiguousArrays{Float64}, ipiv::AbstractVector
   return info[]
 end
 
+"""
+  Wrapper for DLASWP
+"""
+function laswp!(A::ContiguousArrays{Float64, 1}, k1::BlasInt, k2::BlasInt, 
+                ipiv::AbstractVector{BlasInt}, incx::Integer=1)
+
+  @assert length(ipiv) == k2*abs(incx)
+
+  n = 1
+  lda = 1  # length(A) ?
+#  lda = max(1, stride(A, 2))
+  ccall(( $(blasfunc(:dlaswp_)), liblapack), Void, (Ptr{BlasInt}, Ptr{Float64}, 
+            Ptr{BlasInt}, Ptr{BlasInt}, Ptr{BlasInt}, Ptr{BlasInt}, 
+            Ptr{BlasInt}), &n, A, &lda, &k1, &k2, ipiv, &incx)
+
+  return nothing
+
+end
+
 end  # end @eval
