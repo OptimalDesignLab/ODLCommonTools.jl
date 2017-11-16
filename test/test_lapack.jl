@@ -34,5 +34,16 @@ facts("----- Testing Lapack -----") do
 
   @fact norm(b2 - b) --> roughly(0.0, atol=1e-12)
 
+  # test suitesparse solve
+  A = [1.0 2 3; 4 5 6; 8 8 9]
+  As = sparse(A)
+  b = Float64[1, 2, 3]
+
+  x = A\b
+  lu = factorize(As)
+  x2 = zeros(x)
+  solve_suitesparse(lu, b, UMFPACK_A, x2)
+
+  @fact norm(x2 - x) --> roughly(0.0, atol=1e-13)
 
 end

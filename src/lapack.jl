@@ -91,3 +91,29 @@ function laswp!(A::ContiguousArrays{Float64, 1}, k1::BlasInt, k2::BlasInt,
 end
 
 end  # end @eval
+
+import Base.SparseMatrix.UMFPACK: UmfpackLU, umf_ctrl, umf_info,
+                                  UmfpackIndexTypes, umf_nm, UMFPACK_A,
+                                  UMFPACK_At, UMFPACK_Aat, umferror
+
+
+for itype in UmfpackIndexTypes
+  sol_r = umf_nm("solve", :Float64, itype)
+
+  @eval begin
+    function solve_suitesparse(U::UmfpackLU{Float64, $itype}, b::AbstractVector{Float64}, 
+                              typ::Integer, x::AbstractVector{Float64})
+
+      if length(b) != U.m
+        throw(DimensionMismatch())
+      end
+
+      ret = ccall( ($sol_r, :libumfpack), $itype, ($itype, Ptr{$itype}, Ptr{$itype}, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Void}, Ptr{Float64}, Ptr{Float64}), typ, U.colptr, U.rowval, U.nzval, x, b, U.numeric, umf_ctrl, umf_info)
+
+      umferror(ret)
+
+      return nothing
+    end
+
+  end  # end eval begin
+end # loop over itype
