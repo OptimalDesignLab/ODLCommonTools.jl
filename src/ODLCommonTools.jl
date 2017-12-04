@@ -15,7 +15,7 @@ import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
 export Boundary, Interface, getElementL, getFaceL
-export AbstractOptimizationData, AbstractIntegralOptimizationData
+export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
@@ -129,7 +129,7 @@ the data needed for parallel communication
 abstract AbstractSharedFaceData{Tsol}
 
 @doc """
-### ODLCommonTools.AbstractOptimizationData
+### ODLCommonTools.AbstractFunctional
 
 Abstract datatype for optimization related data structures. All data types
 corresponding to optimization problems should be a subtype of this.
@@ -139,13 +139,13 @@ corresponding to optimization problems should be a subtype of this.
    * Topt
 
 """->
-abstract AbstractOptimizationData{Topt}
+abstract AbstractFunctional{Topt}
 
 
 """
   Abstract type for integral objective functions.  Any integral objective
   function should be a subtype of this, which is a subtype ofi
-  [`AbstractOptimizationData`](@ref).
+  [`AbstractFunctional`](@ref).
 
   **Static Parameters**
 
@@ -153,7 +153,8 @@ abstract AbstractOptimizationData{Topt}
 
 
 """
-abstract AbstractIntegralOptimizationData{Topt} <: AbstractOptimizationData{Topt}
+abstract AbstractIntegralFunctional{Topt} <: AbstractFunctional{Topt}
+
 """
 
   Copies only the essential data from one AbstractSolutionData to another.
