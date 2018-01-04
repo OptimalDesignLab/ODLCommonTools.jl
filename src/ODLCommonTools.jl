@@ -18,7 +18,8 @@ export Boundary, Interface, getElementL, getFaceL
 export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
-export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
+export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
+       FunctionalType
 export calcNorm, calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
@@ -312,6 +313,13 @@ abstract FluxType # functor DG flux abstract type
   face integral that compute the reverse mode with respect to the metrics
 """
 abstract FluxType_revm # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
+
+
+"""
+  Like [`FluxType`](@ref), but for flux functions that compute the
+  jacobian of the flux with respect to the left and right solutions.
+"""
+abstract FluxType_diff
 
 abstract FunctionalType # functor for functional abstract type
 
