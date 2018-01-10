@@ -20,7 +20,7 @@ export Boundary
 export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
        FunctionalType
-export calcNorm, calcDiffElementArea
+export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
 # topo.jl
@@ -406,7 +406,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.view
 else
