@@ -405,7 +405,7 @@ facts("--- Testing misc.jl ---") do
   @fact cnt --> 1
 
 
-
+#=
   # check tighter SparseMatrixCSC
   coloringDistance = 2
   pertNeighborEls = [1 0; 2 0]
@@ -445,7 +445,7 @@ facts("--- Testing misc.jl ---") do
   println("mat_sparse.rowval = ", mat_sparse.rowval)
   @fact mat.colptr --> mat_sparse.colptr
   @fact mat.rowval --> mat_sparse.rowval
-
+=#
 
 
 
