@@ -6,7 +6,7 @@
 # Tv is typeof of values
 import Base.SparseMatrixCSC
 
-#=
+
 """
 ### ODLCommonTools.SparseMatrixCSC
 
@@ -146,7 +146,7 @@ function copyDofs{T}(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1})
     end
   end
 end
-=#
+
 
 function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
 # TODO: @doc this
