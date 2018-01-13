@@ -6,6 +6,7 @@
 # Tv is typeof of values
 import Base.SparseMatrixCSC
 
+#=
 """
 ### ODLCommonTools.SparseMatrixCSC
 
@@ -145,6 +146,7 @@ function copyDofs{T}(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1})
     end
   end
 end
+=#
 
 function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
 # TODO: @doc this
@@ -248,8 +250,6 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
   rowval = zeros(Int, bs*bs*sum(dnnz))
   colptr = zeros(Int, mesh.numDof + 1)
 
-  println("length(rowval) = ", length(rowval))
-  println("length(colptr) = ", length(colptr))
   # this is really a block matrix so each entry in dnnz describes bs rows
 
   # set up colptr
@@ -263,31 +263,21 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
     colptr[i+1]  = colptr[i] + nnz_i
   end
 
-  println("colptr[end] = ", colptr[end])
   @assert colptr[end] - 1 == length(rowval)
 
   # set up rowvals
   # put all the rowvals into the matrix first, sort them later
 
   # volume terms
-  println("volume terms")
   for i=1:mesh.numEl
-    println("element ", i)
     for j=1:mesh.numNodesPerElement
-      println("  node ", j)
       for k=1:mesh.numDofPerNode
-        println("    dof ", k)
 
         dof = mesh.dofs[k, j, i]
         idx = colptr[dof]  # index in rowval
-        println("idx = ", idx)
-        println("max idx = ", colptr[dof+1]-1)
         # connect this dof to all other dofs on this element
         for p=1:mesh.numNodesPerElement
-          println("    p = ", p)
           for q=1:mesh.numDofPerNode
-            println("    q = ", q)
-            println("    idx = ", idx)
             rowval[idx] = mesh.dofs[q, p, i]
             idx += 1
           end
@@ -298,40 +288,26 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
   end  # end loop i
 
 
-  println("\ninterfaces")
-
   # interface terms
   for i=1:mesh.numInterfaces
     iface_i = mesh.interfaces[i]
-    println("iface = ", iface_i)
 
     permL = sview(sbpface.perm, :, iface_i.faceL)
     permR = sview(sbpface.perm, :, iface_i.faceR)
 
     if disc_type == INVISCID
       for j=1:length(permL)
-        println("j = ", j)
         for k=1:mesh.numDofPerNode
-          println("k = ", k)
         
           if face_type == 1  # all permL to all permR
             dofL = mesh.dofs[k, permL[j], iface_i.elementL]
             dofR = mesh.dofs[k, permR[j], iface_i.elementR]
-#            block_nodeL = div(dofL - 1, bs) + 1
-#            block_nodeR = div(dofR - 1, bs) + 1
-
-            println("dofL = ", dofL)
-            println("dofR = ", dofR)
 
             # get the piece of rowvals for the left and right dofs
             idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
             idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
-            println("idx_rangeL = ", idx_rangeL)
-            println("idx_rangeR = ", idx_rangeR)
             rowval_rangeL = sview(rowval, idx_rangeL)
             rowval_rangeR = sview(rowval, idx_rangeR)
-            println("rowval_rangeL = ", rowval_rangeL)
-            println("rowval_rangeR = ", rowval_rangeR)
 
 
             idxL = getStartIdx(rowval_rangeL)
@@ -339,16 +315,10 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
 
             # connect to all dofs in perm on the other element
             for p=1:length(permL)
-              println("  p = ", p)
               for q=1:mesh.numDofPerNode
-                println("  q = ", q)
                 dofkL = mesh.dofs[q, permL[p], iface_i.elementL]
                 dofkR = mesh.dofs[q, permR[p], iface_i.elementR]
 
-                println("    dofkL = ", dofkL)
-                println("    dofkR = ", dofkR)
-                println("    idxL = ", idxL)
-                println("    idxR = ", idxR)
                 rowval_rangeL[idxL] = dofkR
                 idxL += 1
                 rowval_rangeR[idxR] = dofkL
@@ -364,8 +334,6 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
 
             dofL = mesh.dofs[k, nodeL, iface_i.elementL]
             dofR = mesh.dofs[k, nodeR, iface_i.elementR]
-#            block_nodeL = div(dofL - 1, bs) + 1
-#            block_nodeR = div(dofR - 1, bs) + 1
 
             # get piece of rowvals for left and right dofs
             idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
@@ -388,7 +356,6 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
       end  # end loop j
 
     elseif disc_type == VISCOUS
-
       # connect all volume nodes of elementL to nodes in perm of elementR
       for j=1:mesh.numNodesPerElement
         for k=1:mesh.numDofPerNode
@@ -405,7 +372,7 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
             for q=1:mesh.numDofPerNode
               rowval_rangeL[idxL] = mesh.dofs[q, permR[p], iface_i.elementR]
               idxL += 1
-              rowval_rangeR[idxR] = mesh.dofs[q, permL[p], iface_i.elementR]
+              rowval_rangeR[idxR] = mesh.dofs[q, permL[p], iface_i.elementL]
               idxR += 1
             end
           end
@@ -427,9 +394,9 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
           idxR = getStartIdx(rowval_rangeR)
           for p=1:mesh.numNodesPerElement
             for q=1:mesh.numDofPerNode
-              rowval_rangeL[idxL] = mesh.dofs[q, permR[p], iface_i.elementR]
+              rowval_rangeL[idxL] = mesh.dofs[q, p, iface_i.elementR]
               idxL += 1
-              rowval_rangeR[idxR] = mesh.dofs[q, permL[p], iface_i.elementR]
+              rowval_rangeR[idxR] = mesh.dofs[q, p, iface_i.elementL]
               idxR += 1
             end
           end
@@ -444,11 +411,7 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
   # check the structure is correct and sort the rowvals
   for i=1:mesh.numDof
 
-    println("i = ", i)
     rng = colptr[i]:(colptr[i+1]-1)
-    println("rowval[$rng] = ", rowval[rng])
-    println("non-zero values = ", countnz(rowval[rng]))
-    println("zero values = ", length(rng) - countnz(rowval[rng]))
     # check that no zeros remain
     for j in rng
       @assert rowval[j] != 0
@@ -519,12 +482,6 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
   @assert mesh.numDof % bs == 0
   nblocks = div(mesh.numDof, bs)
 
-  println("getting block sparsity counts")
-  println("disc_type = ", disc_type)
-  println("face_type = ", face_type)
-  println("mesh.numNodesPerElement = ", mesh.numNodesPerElement)
-  println("mesh.numNodesPerFace = ", mesh.numNodesPerFace)
-
   dnnz = zeros(UInt16, nblocks)
   onnz = zeros(UInt16, nblocks)
 
@@ -536,17 +493,9 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
     end
   end
 
-  if mesh.dim == 3
-    println("after volume integrald, dnnz[9] = ", dnnz[9])
-  end
-
   # face terms
   for i=1:mesh.numInterfaces
     iface_i = mesh.interfaces[i]
-
-    if iface_i.elementL == 1
-      println("iface = ", iface_i)
-    end
 
     permL = sview(sbpface.perm, :, iface_i.faceL)
     permR = sview(sbpface.perm, :, iface_i.faceR)
@@ -557,14 +506,6 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
         dofR = mesh.dofs[1, permR[j], iface_i.elementR]
         block_nodeL = div(dofL - 1, bs) + 1
         block_nodeR = div(dofR - 1, bs) + 1
-
-        if permL[j] == 2 && iface_i.elementL == 1
-          println("processing faceL containing node 2")
-        end
-
-        if permR[j] == 2 && iface_i.elementR == 1
-          println("processing faceR containing node 2")
-        end
 
         if face_type == 1  # all permL to all permR
           dnnz[block_nodeL] += length(permR)
