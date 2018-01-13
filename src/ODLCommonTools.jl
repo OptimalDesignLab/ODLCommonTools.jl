@@ -23,6 +23,9 @@ export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
 export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
+# sparse.jl
+export getBlockSparsityCounts, INVISCID, VISCOUS, EDGESTAB
+
 # topo.jl
 export ElementTopology3, ElementTopology2, ElementTopology
 
