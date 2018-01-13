@@ -24,7 +24,7 @@ export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
 # sparse.jl
-export getBlockSparsityCounts, INVISCID, VISCOUS, EDGESTAB
+export getBlockSparsityCounts, INVISCID, VISCOUS, COLORING
 
 # topo.jl
 export ElementTopology3, ElementTopology2, ElementTopology

@@ -217,7 +217,7 @@ global const VISCOUS=2
   disc_type constant for SparseMatrixCSC constructor, indicating all nodes
   of an element are connected to all nodes of its neighbors
 """
-global const EDGESTAB=3
+global const COLORING=3
 
 """
   Construct a SparseMatrixCSC using the exact sparsity pattern, taking into
@@ -239,10 +239,6 @@ global const EDGESTAB=3
 
 """
 function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Integer, face_type::Integer)
-
-  if disc_type == EDGESTAB
-    error("disc_type == EDGESTAB not supported for SparseMatrixCSC")
-  end
 
   sbpface = mesh.sbpface
   dnnz, onnz = getBlockSparsityCounts(mesh, mesh.sbpface, disc_type, face_type)
@@ -391,7 +387,7 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
         end  # end loop k
       end  # end loop j
 
-    else  # disc_type == VISCOUS
+    elseif disc_type == VISCOUS
 
       # connect all volume nodes of elementL to nodes in perm of elementR
       for j=1:mesh.numNodesPerElement
@@ -406,6 +402,30 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Intege
           idxL = getStartIdx(rowval_rangeL)
           idxR = getStartIdx(rowval_rangeR)
           for p=1:length(permR)
+            for q=1:mesh.numDofPerNode
+              rowval_rangeL[idxL] = mesh.dofs[q, permR[p], iface_i.elementR]
+              idxL += 1
+              rowval_rangeR[idxR] = mesh.dofs[q, permL[p], iface_i.elementR]
+              idxR += 1
+            end
+          end
+
+        end  # end loop k
+      end  # end loop j
+
+    else  # disc_type = COLORING
+      for j=1:mesh.numNodesPerElement
+        for k=1:mesh.numDofPerNode
+          dofL = mesh.dofs[k, j, iface_i.elementL]
+          dofR = mesh.dofs[k, j, iface_i.elementR]
+          idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+          idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+          rowval_rangeL = sview(rowval, idx_rangeL)
+          rowval_rangeR = sview(rowval, idx_rangeR)
+
+          idxL = getStartIdx(rowval_rangeL)
+          idxR = getStartIdx(rowval_rangeR)
+          for p=1:mesh.numNodesPerElement
             for q=1:mesh.numDofPerNode
               rowval_rangeL[idxL] = mesh.dofs[q, permR[p], iface_i.elementR]
               idxL += 1
@@ -493,7 +513,7 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
     error("unsupported AbstractFace type: $(typeof(sbpface))")
   end
 
-  @assert disc_type == INVISCID || disc_type == VISCOUS || disc_type == EDGESTAB
+  @assert disc_type == INVISCID || disc_type == VISCOUS || disc_type == COLORING
 
   bs = mesh.numDofPerNode
   @assert mesh.numDof % bs == 0
@@ -570,7 +590,7 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
         dnnz[block_nodeR] += length(permL)
       end  # end loop j
 
-    else  # disc_type == EDGESTAB
+    else  # disc_type == COLORING
       # all volume nodes to all volume nodes
       for j=1:mesh.numNodesPerElement
         dofL = mesh.dofs[1, j, iface_i.elementL]
