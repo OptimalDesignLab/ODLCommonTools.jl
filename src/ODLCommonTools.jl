@@ -54,10 +54,10 @@ export sview  # don't export this to make the change not completely breaking
   This abstract type is the supertype for all the objects that store the 
   solution data. Every physics module should implement its own subtype.
 
-  Static parameters:
+  **Static parameters**
 
-    Tsol: datatype of solution variables
-    Tres: datatype of the mesh variables
+   * Tsol: datatype of solution variables
+   * Tres: datatype of the mesh variables
 
   See the [AbstractSolutionData](@ref) for the description of everything this
   type must implement.
@@ -69,9 +69,9 @@ abstract AbstractSolutionData{Tsol, Tres}
   This abstract type is the supertype for all mesh objects.  Every interface to
   a mesh software should define its own implementation.
 
-  Static parameters:
+  **Static parameters**
 
-    Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
+   * Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
           space, mapping jacobian).
 
   See the [AbstractMesh](@ref) for the description of everything this
@@ -90,7 +90,7 @@ abstract AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh}
 @doc """
 ### ODLCommonTools.AbstractDGGMesh
 
-  The abstrac type is the supertype of all discontinuous Galerkin meshes
+  The abstract type is the supertype of all discontinuous Galerkin meshes
 """->
 abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
 

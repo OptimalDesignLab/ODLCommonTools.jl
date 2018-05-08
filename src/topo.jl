@@ -32,9 +32,9 @@ typealias TopoIdxType Int
                 the second vertex.
                 In 2D this is the same as face_verts.
 
-    face_edges: Tdim x numEdgesPerFace x numFaces array containing the
-                indices of the vertices (first dimension) that define each edge
-                (second dimension) of each face (3rd dimension)
+    face_edges: numEdgesPerFace x numFaces array containins, for each face,
+                the index of the edges on the face in the element list of
+                edges.
 
   Constructor:
     face_verts: the indices of the vertices that define each face
