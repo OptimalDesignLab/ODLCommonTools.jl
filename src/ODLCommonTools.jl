@@ -14,7 +14,7 @@ import Base.copy
 import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
-export Boundary, Interface, getElementL, getFaceL
+export Boundary, Interface, getElementL, getFaceL, NullBoundary, NullInterface
 export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
@@ -234,6 +234,11 @@ immutable Boundary
   face::UInt8
 end
 
+"""
+  Boundary(0, 0).  Useful as a default value for function arguments
+"""
+global const NullBoundary = Boundary(0,0)
+
 @doc """
 ### ODLCommonTools.Interface
 
@@ -262,6 +267,8 @@ immutable Interface
   faceR::UInt8
   orient::UInt8
 end
+
+global const NullInterface = Interface(0, 0, 0, 0, 0)
 
 # small interface for Boundary and Interface
 

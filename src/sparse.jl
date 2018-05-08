@@ -681,7 +681,7 @@ else
 
 
   end
-
+#=
   function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
@@ -691,7 +691,7 @@ else
     return A.nzval[idx]
    
   end
-
+=#
 end  # end if band_dense
 function fill!(A::SparseMatrixCSC, val)
   fill!(A.nzval, val)
