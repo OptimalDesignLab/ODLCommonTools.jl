@@ -21,6 +21,7 @@
 
 facts("--- Testing misc.jl ---") do
 
+  # test mat-vec
   A = rand(3,3)
   x = rand(3)
   b = A*x
@@ -30,6 +31,211 @@ facts("--- Testing misc.jl ---") do
 
   @fact b --> roughly(b2, atol=1e-14)
   @fact b --> roughly(b3, atol=1e-14)
+
+  A = rand(4, 3)
+  x = rand(3)
+  b = A*x
+  b2 = smallmatvec(A, x)
+
+  @fact b2 --> roughly(b, atol=1e-14)
+
+  # test reverse mode
+  A = rand(4,3)
+
+  x = rand(3)
+  x2 = zeros(Complex128, 3)
+  copy!(x2, x)
+
+  b = zeros(4)
+  b2 = zeros(Complex128, 4)
+
+  jac = zeros(4, 3)
+  jac2 = zeros(4, 3)
+  h = 1e-20
+  pert = Complex128(0, h)
+  for i=1:3
+    x2[i] += pert
+    fill!(b2, 0)
+    smallmatvec!(A, x2, b2)
+
+    for j=1:4
+      jac[j, i] = imag(b2[j])/h
+    end
+
+    x2[i] -= pert
+  end
+
+  for j=1:4
+    b[j] = 1  # actuall b_bar
+    fill!(x, 0)  # actuall x_bar
+    smallmatvec_revv!(A, x, b)
+
+    for i=1:3
+      jac2[j, i] = x[i]
+    end
+
+    b[j] = 0
+  end
+
+  @fact norm(jac - jac2) --> roughly(0.0, atol=1e-13)
+
+  # test reinterper-BLAS interaction
+
+  println("testing BLAS fallbacks")
+  for d=2:20  # size of arrays
+    A = rand(Complex128, d, d, 1)
+    Av = unsafe_view(A, :, :, 1)
+    
+    x = rand(d, 1)
+    xv = unsafe_view(x, :, 1)
+#    xv = x[:, 1]
+
+    b = zeros(Complex128, d, 1)
+    bv = unsafe_view(b, :, 1)
+#    bv = b[:, 1]
+
+    # test unsafe_view
+    smallmatvec!(Av, xv, bv)
+
+    b2 = A[:, :, 1]*x[:, 1]
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    # test safe view
+    Av2 = view(A, :, :, 1)
+    xv2 = view(x, :, 1)
+    bv2 = view(b, :, 1)
+
+    smallmatvec!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # check mixed argument types
+    b3 = zeros(b2)
+    smallmatvec!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), ROView(xv), bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatvec!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test transposed mat-vec
+    b2 = A[:, :, 1].'*x[:, 1]
+
+    smallmatTvec!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatTvec!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+  end
+
+
+  # test mat-mat 
+  for d=2:20  # size of arrays
+    A = rand(Complex128, d, d, 1)
+    Av = unsafe_view(A, :, :, 1)
+    
+    x = rand(d, d, 1)
+    xv = unsafe_view(x, :, :, 1)
+#    xv = x[:, 1]
+
+    b = zeros(Complex128, d, d, 1)
+    bv = unsafe_view(b, :, :, 1)
+#    bv = b[:, 1]
+
+    b2 = A[:, :, 1]*x[:, :, 1]
+
+    smallmatmat!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    # test safe view
+    Av2 = view(A, :, :, 1)
+    xv2 = view(x, :, :, 1)
+    bv2 = view(b, :, :, 1)
+
+    smallmatmat!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    b3 = zeros(b2)
+
+    smallmatmat!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - bv2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmat!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test mat-matT
+    b2 = A[:, :, 1]*x[:, :, 1].'
+    smallmatmatT!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(A[:, :, 1], xv2, bv2)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    b3 = zeros(b2)
+    smallmatmatT!(Av2, xv2, b3)
+
+    @fact norm(b3 - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(ROView(Av2), xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatmatT!(ROView(Av2), xv, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+    # test matT-mat
+    b2 = A[:, :, 1].'*x[:, :, 1]
+
+    smallmatTmat!(Av, xv, bv)
+
+    @fact norm(bv - b2) --> roughly(0.0, atol=1e-14)
+
+    smallmatTmat!(Av2, xv2, bv2)
+
+    @fact norm(bv2 - b2) --> roughly(0.0, atol=1e-14)
+
+  end
+
 
   A = rand(4, 4)
   x = rand(4, 2)
@@ -63,10 +269,9 @@ facts("--- Testing misc.jl ---") do
   x = rand(4, 7)
   b = zeros(7, 4)
   b2 = A*(x.')
-  println("b2 = ", b2)
   smallmatmatT!(A, x, b)
   b3 = smallmatmatT(A, x)
-  @fact b--> roughly(b2, atol=1e-14)
+  @fact b --> roughly(b2, atol=1e-14)
   @fact b --> roughly(b3, atol=1e-14)
 
   # test smallmatTvec
@@ -200,7 +405,7 @@ facts("--- Testing misc.jl ---") do
   @fact cnt --> 1
 
 
-
+#=
   # check tighter SparseMatrixCSC
   coloringDistance = 2
   pertNeighborEls = [1 0; 2 0]
@@ -240,7 +445,7 @@ facts("--- Testing misc.jl ---") do
   println("mat_sparse.rowval = ", mat_sparse.rowval)
   @fact mat.colptr --> mat_sparse.colptr
   @fact mat.rowval --> mat_sparse.rowval
-
+=#
 
 
 
@@ -310,6 +515,15 @@ facts("--- Testing misc.jl ---") do
   ElementTopology3()
   ElementTopology2()
 
+  face_verts = ElementTopology3().face_verts
+  edge_verts = [1 2 3 1 2 3;
+                2 3 1 4 4 4]
+  topo = ElementTopology{3}(face_verts, edge_verts, topo2=ElementTopology2())
+
+  @fact topo.face_edges --> [1 1 2 3; 2 5 6 6; 3 4 5 4]
+  @fact topo.face_edges_flipped --> [false false false true;
+                                     false false false false;
+                                     false true  true  true]
 
   # test isFieldDefined
 
@@ -336,4 +550,46 @@ facts("--- Testing misc.jl ---") do
   fname = "abc.dat"
   fname2 = get_parallel_fname(fname, 1)
   @fact fname2 --> "abc_1.dat"
+
+  fname = "abc"
+  fname2 = get_parallel_fname(fname, 1)
+  @fact fname2 --> "abc_1"
+
+  # test append_path, prepend_path
+  pth = ""
+  new_entry = "/dir1/dir2"
+  new_pth = append_path(pth, new_entry)
+  @fact new_pth --> new_entry
+
+  pth = "/dir0"
+  new_pth = append_path(pth, new_entry)
+  @fact new_pth --> "/dir0:/dir1/dir2"
+
+  pth = ""
+  new_pth = prepend_path(pth, new_entry)
+  @fact new_pth --> new_entry
+
+  pth = "/dir0"
+  new_pth = prepend_path(pth, new_entry)
+  @fact new_pth --> "/dir1/dir2:/dir0"
+
+  str = joinpath_ascii(pwd(), "hello")
+  @fact str --> joinpath(pwd(), "hello")
+
+  # test splitting fnames
+  pth = "test.dat"
+  fstem, fext = split_fname(pth)
+  @fact fstem --> "test"
+  @fact fext --> ".dat"
+
+  pth = "test"
+  fstem, fext = split_fname(pth)
+  @fact fstem --> "test"
+  @fact fext --> ""
+
+
+
+
+
+
 end

@@ -6,51 +6,78 @@ __precompile__(true)
 module ODLCommonTools
 using ArrayViews
 
+include("topo.jl")
+
 import Base.show
 import Base.isless
 import Base.copy
 import Base.copy!
-export AbstractSolutionData, AbstractParamType, Abstract3DArray
-export AbstractMesh, AbstractCGMesh, AbstractDGMesh
-export Boundary, Interface, getElementL, getFaceL
-export AbstractOptimizationData
+export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
+export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
+export Boundary, Interface, getElementL, getFaceL, NullBoundary, NullInterface
+export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
-export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FunctionalType
-export calcNorm, calcDiffElementArea
-export ElementTopology3, ElementTopology2, ElementTopology
-#export copyForMultistage
-#export sview  # don't export this to make the change not completely breaking
+export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
+       FunctionalType
+export calcDiffElementArea
+export functorThatErrors, functorThatErrors_revm
 
-@doc """
-### ODLCommonTools.AbtractSolutionData{Tsol, Tres}
+# sparse.jl
+export getBlockSparsityCounts, INVISCID, VISCOUS, COLORING
+
+# topo.jl
+export ElementTopology3, ElementTopology2, ElementTopology
+
+# eqn_copy.jl
+export copyForMultistage!
+
+# eqn_deepcopy.jl
+export eqn_deepcopy, eqn_deepcopy_fields
+
+export ROView, ro_sview, ROVector, ROMatrix, ROArray
+
+# misc.jl
+export prepend_path, append_path, split_fname
+
+# io.jl
+export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
+
+# lapack.jl
+export getrf!, getrs2!, BlasInt, laswp!, solve_suitesparse, UMFPACK_A,
+       UMFPACK_At, UMFPACK_Aat
+
+export sview  # don't export this to make the change not completely breaking
+
+"""
 
   This abstract type is the supertype for all the objects that store the 
   solution data. Every physics module should implement its own subtype.
 
-  Static parameters:
-    Tsol: datatype of solution variables
-    Tres: datatype of the mesh variables
+  **Static parameters**
 
-  See the repo_root/doc/interfaces.md for the description of everything this
+   * Tsol: datatype of solution variables
+   * Tres: datatype of the mesh variables
+
+  See the [AbstractSolutionData](@ref) for the description of everything this
   type must implement.
 
-"""->
-abstract AbstractSolutionData{Tsol, Tres} # Abstract type defnition
-@doc """
-### ODLCommonTools.AbstractMesh{Tmsh}
+"""
+abstract AbstractSolutionData{Tsol, Tres}
 
+"""
   This abstract type is the supertype for all mesh objects.  Every interface to
   a mesh software should define its own implementation.
 
-  Static parameters:
-    Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
+  **Static parameters**
+
+   * Tmsh: datatype of the mesh data (coordinates, mapping to/from parametric
           space, mapping jacobian).
 
-  See the repo_root/doc/interfaces.md for the description of everything this
+  See the [AbstractMesh](@ref) for the description of everything this
   type must implement.
 
-"""->
+"""
 abstract AbstractMesh{Tmsh}
 
 @doc """
@@ -63,13 +90,11 @@ abstract AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh}
 @doc """
 ### ODLCommonTools.AbstractDGGMesh
 
-  The abstrac type is the supertype of all discontinuous Galerkin meshes
+  The abstract type is the supertype of all discontinuous Galerkin meshes
 """->
 abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
 
-@doc """
-### ODLCommonTools.AbstractParamType
-
+"""
   This abstract type is the supertype for all Param objects, which hold values 
   needed for the computation in a place that is fast to access.
 
@@ -77,7 +102,10 @@ abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
    the AbstractSolutionData might not be passed (depending on the organization 
    of the physics module.
 
-"""->
+  **Static Parameters**:
+   
+   * Tdim: the dimensionality of the equation being solved (2d or 3d usually)
+"""
 abstract AbstractParamType{Tdim}
 
 @doc """
@@ -89,21 +117,63 @@ abstract AbstractParamType{Tdim}
 """->
 typealias Abstract3DArray{T} AbstractArray{T, 3}
 
+"""
+  A typealias for any 4D array.  Element is the static parameter
+"""
+typealias Abstract4DArray{T} AbstractArray{T, 4}
+
+"""
+Abstract supertype of all SharedFaceData implemenations, used to storing
+the data needed for parallel communication
+
+  **Static Parameters**
+
+   * Tsol: the datatype of the solution variables
+"""
+abstract AbstractSharedFaceData{Tsol}
+
 @doc """
-### ODLCommonTools.AbstractOptimizationData
+### ODLCommonTools.AbstractFunctional
 
 Abstract datatype for optimization related data structures. All data types
 corresponding to optimization problems should be a subtype of this.
 
-"""->
-abstract AbstractOptimizationData
+  **Static Parameters**
 
-@doc """
-
-In place copy function for AbstractSolutionData
+   * Topt
 
 """->
-function copy!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
+abstract AbstractFunctional{Topt}
+
+
+"""
+  Abstract type for integral objective functions.  Any integral objective
+  function should be a subtype of this, which is a subtype ofi
+  [`AbstractFunctional`](@ref).
+
+  **Static Parameters**
+
+   * Topt
+
+
+"""
+abstract AbstractIntegralFunctional{Topt} <: AbstractFunctional{Topt}
+
+"""
+
+  Copies only the essential data from one AbstractSolutionData to another.
+
+  Currently copies:
+    * q
+    * q_vec
+    * res
+    * res_vec
+    * shared_data
+
+  Implementation Notes:
+    Avoids double copying when q and q_vec alias
+"""
+function copyForMultistage!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
 
   copy!(eqn_dest.q, eqn_src.q)
 
@@ -113,11 +183,11 @@ function copy!(eqn_dest::AbstractSolutionData, eqn_src::AbstractSolutionData)
     copy!(eqn_dest.q_vec, eqn_src.q_vec)
   end
 
+
   # This is needed because we suspect copy! will only work down one level
-  num_inner_arrays = length(eqn_src.q_face_send)
-  for i = 1:num_inner_arrays
-    copy!(eqn_dest.q_face_send[i], eqn_src.q_face_send[i])
-    copy!(eqn_dest.q_face_recv[i], eqn_src.q_face_recv[i])
+  num_inner_arrays = length(eqn_src.shared_data)
+  for i = 1:length(eqn_src.shared_data)
+    copy!(eqn_dest.shared_data[i], eqn_src.shared_data[i])
   end
 
   copy!(eqn_dest.res, eqn_src.res)
@@ -144,60 +214,6 @@ function copy(eqn_src::AbstractSolutionData)
 
 end
 
-function copyForMultistage(eqn_src::AbstractSolutionData)
-
-#   eqn_dest = AbstractSolutionData()
-  eqn_dest = get_uninitialized_SolutionData(eqn_src)
-  # println("----- in copyForMultistage")
-
-  fields = fieldnames(typeof(eqn_src))
-
-  for i = 1:length(fields)
-
-    obj = getfield(eqn_src, fields[i])
-    setfield!(eqn_dest, fields[i], obj)
-
-  end
-
-  eqn_dest.q = copy(eqn_src.q)
-  # slight optimization- checking if we need to copy q_vec at all,
-  #   in case q_vec & q point to the same thing
-  if pointer(eqn_src.q) != pointer(eqn_src.q_vec)
-    eqn_dest.q_vec = copy(eqn_src.q_vec)
-  else
-    eqn_dest.q_vec = reshape(eqn_dest.q, size(eqn_src.q_vec)...)
-  end
-
-  # This is needed because we suspect copy! will only work down one level
-  num_inner_arrays = length(eqn_src.q_face_send)
-  eqn_dest.q_face_send = copy(eqn_src.q_face_send)
-  eqn_dest.q_face_recv = copy(eqn_src.q_face_recv)
-  for i = 1:num_inner_arrays
-    eqn_dest.q_face_send[i] = copy(eqn_src.q_face_send[i])
-    eqn_dest.q_face_recv[i] = copy(eqn_src.q_face_recv[i])
-  end
-
-  eqn_dest.res = copy(eqn_src.res)
-  # same slight optimization as above for q & q_vec
-  if pointer(eqn_src.res) != pointer(eqn_src.res_vec)
-    eqn_dest.res_vec = copy(eqn_src.res_vec)
-  else
-    eqn_dest.res_vec = reshape(eqn_dest.res, size(eqn_src.res_vec)...)
-  end
-
-  return eqn_dest
-
-end
-
-# TODO docstring
-function get_uninitialized_SolutionData(eqn::AbstractSolutionData)
-
-  throw(ErrorException("get_uninitialized_SolutionData not defined for AbstractSolutionData, must use concrete type"))
-
-  return nothing
-  
-end
-
 @doc """
 ### ODLCommonTools.Boundary
 
@@ -217,6 +233,11 @@ immutable Boundary
   element::UInt32
   face::UInt8
 end
+
+"""
+  Boundary(0, 0).  Useful as a default value for function arguments
+"""
+global const NullBoundary = Boundary(0,0)
 
 @doc """
 ### ODLCommonTools.Interface
@@ -247,6 +268,8 @@ immutable Interface
   orient::UInt8
 end
 
+global const NullInterface = Interface(0, 0, 0, 0, 0)
+
 # small interface for Boundary and Interface
 
 """
@@ -273,29 +296,62 @@ function getFaceL(iface::Interface)
   return iface.faceL
 end
 
+"""
+  Abstract supertype of all boundary condition functors
+"""
 abstract BCType  # functor boundary condition abstract type
 
+"""
+  Abstract supertype of all boundary condition functors that compute the
+  reverse mode with respect to the metrics
+"""
 abstract BCType_revm # functor for reverse mode of boundary conditions w.r.t mesh metrics
 
+"""
+  Abstract supertype of all source term functors
+"""
 abstract SRCType # functor source term abstract type
 
+"""
+  Abstract supertype of all numerical flux functions used by standard DG face
+  integrals
+"""
 abstract FluxType # functor DG flux abstract type
 
+"""
+  Abstract supertype of all numerical flux functions used by standard DG
+  face integral that compute the reverse mode with respect to the metrics
+"""
 abstract FluxType_revm # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
+
+
+"""
+  Like [`FluxType`](@ref), but for flux functions that compute the
+  jacobian of the flux with respect to the left and right solutions.
+"""
+abstract FluxType_diff
 
 abstract FunctionalType # functor for functional abstract type
 
+"""
+  Show method for Boundary objects
+"""
 function show(io::IO, object::Boundary)
   print(io, "Boundary element, face = ", object.element, ", ", object.face)
 end
 
+"""
+  Show method for Interface objects
+"""
 function show(io::IO, obj::Interface)
   print(io, "Interface elementL, elementR, faceL, faceR, orient = ",
         obj.elementL, ", ",obj.elementR, ", ", obj.faceL, ", ", obj.faceR,
         ", ",obj.orient)
 end
 
-
+"""
+  Compare boundaries first by element, then by face
+"""
 function isless(a::Boundary, b::Boundary)
   if a.element < b.element
     return true
@@ -309,6 +365,9 @@ function isless(a::Boundary, b::Boundary)
 
 end
 
+"""
+  Compare Interfaces, first by elementL, then by elementR
+"""
 function isless(a::Interface, b::Interface)
   if a.elementL < b.elementL
     return true
@@ -321,55 +380,6 @@ function isless(a::Interface, b::Interface)
   else
     return false
   end
-end
-
-"""
-### ODLCommonTools.ElementTopology3
-
-  This type describes the topology of the reference element.  For now, it only
-  contains face information, but eventually will needed more info.
-"""
-
-immutable ElementTopology{Tdim}
-  face_verts::Array{Int, 2}  # 3 x 4 array holding the vertices of each face of                                a tet
-
-  function ElementTopology(face_verts::Array{Int, 2})
-
-    # do sanity checks
-
-    # check all vertices are within range
-    for i=1:length(face_verts)
-      @assert face_verts[i] > 0
-      @assert face_verts[i] <= 4
-    end
-
-    # check faces are distinct
-    for i=1:size(face_verts, 2)
-      curr_face = sort(face_verts[:, i])
-      for j=(i+1):size(face_verts, 2)
-        @assert sort(face_verts[:, j]) != curr_face
-      end
-    end
-
-    return new(face_verts)
-
-  end  # end function
-end
-
-"""
-  Default constructor that uses Pumi topology
-"""
-function ElementTopology3()
-  face_verts = [1 1 2 1; 2 2 3 3; 3 4 4 4]
-  return ElementTopology{3}(face_verts)
-end
-
-"""
-  Constructs a dummy 2d ElementTopology
-"""
-function ElementTopology2()
-  face_verts = [1 2 3; 2 3 1]
-  return ElementTopology{2}(face_verts)
 end
 
 @doc """
@@ -413,10 +423,85 @@ else
   global const sview = ArrayViews.unsafe_view
 end
 
+"""
+  This macro eliminates blocks of code if safe_views is false
+"""
+macro ifsafeview(ex)
+
+  if safe_views
+    return quote
+      $(esc(ex))
+    end
+  else
+    return nothing
+  end
+end  # end macro
+
+@doc """
+### ODLCommonTools.functorThatErrors
+
+  This functor will error.
+
+  It is intended to be used to initialize functor fields in eqn to some value 
+    so that eqn_deepcopy can operate upon them.
+
+  This should never be called; if it is called, then the field of eqn has not been
+    properly defined for its desired usage.
+
+  Inputs: none
+  Outputs: none
+
+"""->
+type functorThatErrors <: FluxType
+end
+
+function call{Tsol, Tres, Tmsh}(obj::functorThatErrors, params::AbstractParamType,
+              uL::AbstractArray{Tsol,1},
+              uR::AbstractArray{Tsol,1},
+              aux_vars::AbstractVector{Tres},
+              nrm::AbstractVector{Tmsh},
+              F::AbstractVector{Tres})
+
+  error("Default functor has been called. You have not properly initialized something.")
+  return nothing
+end
+
+@doc """
+### ODLCommonTools.functorThatErrors_revm
+
+  This functor will error.
+
+  It is intended to be used to initialize functor fields in eqn to some value 
+    so that eqn_deepcopy can operate upon them.
+
+  This should never be called; if it is called, then the field of eqn has not been
+    properly defined for its desired usage.
+
+  Inputs: none
+  Outputs: none
+
+"""->
+type functorThatErrors_revm <: FluxType_revm
+end
+
+function call{Tsol, Tres, Tmsh}(obj::functorThatErrors_revm, params::AbstractParamType,
+              uL::AbstractArray{Tsol,1},
+              uR::AbstractArray{Tsol,1},
+              aux_vars::AbstractVector{Tres},
+              nrm::AbstractVector{Tmsh},
+              F::AbstractVector{Tres})
+
+  error("Default functor has been called. You have not properly initialized something.")
+  return nothing
+end
 
 
-
-include("misc.jl")
+include("types.jl")
 include("sparse.jl")
-include("eqn_copy.jl")
+include("eqn_deepcopy.jl")
+include("ro_view.jl")
+include("io.jl")
+include("misc.jl")
+include("getAllTypeParams.jl")
+include("lapack.jl")
 end     # module

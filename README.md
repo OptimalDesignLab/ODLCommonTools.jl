@@ -19,8 +19,9 @@ Note that these functions override the existing definitions of
 bandwidth dense-with-the-band `SparseMatrixCSC`s.
 
 
-[![Build Status](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl.svg)](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl)
-[![Coverage Status](https://coveralls.io/repos/OptimalDesignLab/ODLCommonTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)
+# Version History
+v0.1: stable version
+v0.2: new parallel constructs and read-only sview
 
-[![Coverage Status](https://coveralls.io/repos/OptimalDesignLab/ODLCommonTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)
+[![Build Status](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl.svg)](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl)
 [![codecov.io](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl/coverage.svg?branch=master)](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)

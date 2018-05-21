@@ -6,13 +6,24 @@
 # Tv is typeof of values
 import Base.SparseMatrixCSC
 
+
 """
 ### ODLCommonTools.SparseMatrixCSC
 
   Construct a SparseMatrixCSC for a DG mesh, using the pertNeighborEls
   to determine connectivity and dofs to determine the non-zero indices.
-  This sparsity structure should be exact.
+  This sparsity structure is exact for SBPOmega but an over-estimate for
+  other operators.
 
+  **Inputs**
+
+   * mesh: a DG mesh
+   * Tv: element type of the matrix (the indices are Ints because UMFPack is
+         picky)
+
+  **Outputs**
+
+   * mat: the matrix
 """
 function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv})
 # construct a SparseMatrixCSC that preallocates the space needed for values
@@ -136,6 +147,7 @@ function copyDofs{T}(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1})
   end
 end
 
+
 function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
 # TODO: @doc this
 # preallocate matrix based on maximum, minimum non zero
@@ -189,6 +201,407 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   return SparseMatrixCSC(m, n, colptr, rowval, nzval)
 end
 
+
+"""
+  disc_type constant for SparseMatrixCSC constructor, indicating the face nodes
+  of an element are connected to the face nodes of the element that shares
+  the face.
+"""
+global const INVISCID=1
+
+"""
+  disc_type constant for SparseMatrixCSC constructor, indicating all nodes
+  of an element are connected to all face nodes of its neighbours
+"""
+global const VISCOUS=2
+
+"""
+  disc_type constant for SparseMatrixCSC constructor, indicating all nodes
+  of an element are connected to all nodes of its neighbors
+"""
+global const COLORING=3
+
+"""
+  Construct a SparseMatrixCSC using the exact sparsity pattern, taking into
+  account the type of SBP face operator.
+
+  **Inputs**
+
+   * mesh: a DG mesh
+   * Tv: element type of the matrix (the indices are Ints because UMFPack is
+         picky)
+   * disc_type: discretization type, 1 = Inviscid, 2 = viscous
+   * face_type: This determined what kind of sbpface is used to compute the
+                sparsity pattern. 1 = sbpface is a DenseFace, 2 = sbpface is
+                a SparseFace
+
+  **Outputs**
+
+   * mat: the matrix
+
+"""
+function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Integer, face_type::Integer)
+
+  sbpface = mesh.sbpface
+  dnnz, onnz = getBlockSparsityCounts(mesh, mesh.sbpface, disc_type, face_type)
+  bs = mesh.numDofPerNode
+
+  nzval = zeros(Tv, bs*bs*sum(dnnz))
+  rowval = zeros(Int, bs*bs*sum(dnnz))
+  colptr = zeros(Int, mesh.numDof + 1)
+
+  # this is really a block matrix so each entry in dnnz describes bs rows
+
+  # set up colptr
+  # the matrix is structurally symmetric, so we can use dnnz (which are the
+  # per-row values) to set up colptr
+
+  colptr[1] = 1
+  for i=1:(mesh.numDof)
+    block_idx = div(i - 1, bs) + 1
+    nnz_i = dnnz[block_idx]*bs
+    colptr[i+1]  = colptr[i] + nnz_i
+  end
+
+  @assert colptr[end] - 1 == length(rowval)
+
+  # set up rowvals
+  # put all the rowvals into the matrix first, sort them later
+
+  # volume terms
+  for i=1:mesh.numEl
+    for j=1:mesh.numNodesPerElement
+      for k=1:mesh.numDofPerNode
+
+        dof = mesh.dofs[k, j, i]
+        idx = colptr[dof]  # index in rowval
+        # connect this dof to all other dofs on this element
+        for p=1:mesh.numNodesPerElement
+          for q=1:mesh.numDofPerNode
+            rowval[idx] = mesh.dofs[q, p, i]
+            idx += 1
+          end
+        end
+
+      end  # end loop k
+    end  # end loop j
+  end  # end loop i
+
+
+  # interface terms
+  for i=1:mesh.numInterfaces
+    iface_i = mesh.interfaces[i]
+
+    permL = sview(sbpface.perm, :, iface_i.faceL)
+    permR = sview(sbpface.perm, :, iface_i.faceR)
+
+    if disc_type == INVISCID
+      for j=1:length(permL)
+        for k=1:mesh.numDofPerNode
+        
+          if face_type == 1  # all permL to all permR
+            dofL = mesh.dofs[k, permL[j], iface_i.elementL]
+            dofR = mesh.dofs[k, permR[j], iface_i.elementR]
+
+            # get the piece of rowvals for the left and right dofs
+            idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+            idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+            rowval_rangeL = sview(rowval, idx_rangeL)
+            rowval_rangeR = sview(rowval, idx_rangeR)
+
+
+            idxL = getStartIdx(rowval_rangeL)
+            idxR = getStartIdx(rowval_rangeR)
+
+            # connect to all dofs in perm on the other element
+            for p=1:length(permL)
+              for q=1:mesh.numDofPerNode
+                dofkL = mesh.dofs[q, permL[p], iface_i.elementL]
+                dofkR = mesh.dofs[q, permR[p], iface_i.elementR]
+
+                rowval_rangeL[idxL] = dofkR
+                idxL += 1
+                rowval_rangeR[idxR] = dofkL
+                idxR += 1
+              end
+            end
+
+          else  # face_type == 2, diagonalE
+            nodeL = permL[j]
+            # get corresponding node on other element
+            pnbr = sbpface.nbrperm[j, iface_i.orient]
+            nodeR = permR[pnbr]
+
+            dofL = mesh.dofs[k, nodeL, iface_i.elementL]
+            dofR = mesh.dofs[k, nodeR, iface_i.elementR]
+
+            # get piece of rowvals for left and right dofs
+            idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+            idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+            rowval_rangeL = sview(rowval, idx_rangeL)
+            rowval_rangeR = sview(rowval, idx_rangeR)
+
+            idxL = getStartIdx(rowval_rangeL)
+            idxR = getStartIdx(rowval_rangeR)
+
+            # connect to all dofs of corresponding node on other element
+            for q=1:mesh.numDofPerNode
+              rowval_rangeL[idxL] = mesh.dofs[q, nodeR, iface_i.elementR]
+              idxL += 1
+              rowval_rangeR[idxR] = mesh.dofs[q, nodeL, iface_i.elementL]
+              idxR += 1
+            end
+          end  # end if face_type
+        end  # end loop k
+      end  # end loop j
+
+    elseif disc_type == VISCOUS
+      # connect all volume nodes of elementL to nodes in perm of elementR
+      for j=1:mesh.numNodesPerElement
+        for k=1:mesh.numDofPerNode
+          dofL = mesh.dofs[k, j, iface_i.elementL]
+          dofR = mesh.dofs[k, j, iface_i.elementR]
+          idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+          idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+          rowval_rangeL = sview(rowval, idx_rangeL)
+          rowval_rangeR = sview(rowval, idx_rangeR)
+
+          idxL = getStartIdx(rowval_rangeL)
+          idxR = getStartIdx(rowval_rangeR)
+          for p=1:length(permR)
+            for q=1:mesh.numDofPerNode
+              rowval_rangeL[idxL] = mesh.dofs[q, permR[p], iface_i.elementR]
+              idxL += 1
+              rowval_rangeR[idxR] = mesh.dofs[q, permL[p], iface_i.elementL]
+              idxR += 1
+            end
+          end
+
+        end  # end loop k
+      end  # end loop j
+
+    else  # disc_type = COLORING
+      for j=1:mesh.numNodesPerElement
+        for k=1:mesh.numDofPerNode
+          dofL = mesh.dofs[k, j, iface_i.elementL]
+          dofR = mesh.dofs[k, j, iface_i.elementR]
+          idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+          idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+          rowval_rangeL = sview(rowval, idx_rangeL)
+          rowval_rangeR = sview(rowval, idx_rangeR)
+
+          idxL = getStartIdx(rowval_rangeL)
+          idxR = getStartIdx(rowval_rangeR)
+          for p=1:mesh.numNodesPerElement
+            for q=1:mesh.numDofPerNode
+              rowval_rangeL[idxL] = mesh.dofs[q, p, iface_i.elementR]
+              idxL += 1
+              rowval_rangeR[idxR] = mesh.dofs[q, p, iface_i.elementL]
+              idxR += 1
+            end
+          end
+
+        end  # end loop k
+      end  # end loop j
+
+    end  # end if disc_type
+  end  # end loop i
+
+
+  # check the structure is correct and sort the rowvals
+  for i=1:mesh.numDof
+
+    rng = colptr[i]:(colptr[i+1]-1)
+    # check that no zeros remain
+    for j in rng
+      @assert rowval[j] != 0
+    end
+
+    rowval_i = sview(rowval, rng)
+    sort!(rowval_i)
+  end
+
+  @assert colptr[mesh.numDof + 1] == length(rowval) + 1
+
+  
+
+  return SparseMatrixCSC(mesh.numDof, mesh.numDof, colptr, rowval, nzval)
+end
+
+"""
+  Helper function to get the index of the first zero entry of the array.
+  Returns zero otherwise
+
+  **Inputs**
+
+   * arr: the array
+"""
+function getStartIdx(arr::AbstractVector)
+
+  for i=1:length(arr)
+    if arr[i] == 0
+      return i
+    end
+  end
+
+  return 0
+end
+
+"""
+  Compute the number of block (mesh.numDofPerNode x mesh.numDofPerNode) that
+  each blocks is connected to in the jacobian matrix
+
+  **Inputs**
+
+   * mesh: a DG mesh
+   * sbpface: an AbstractFace
+   * disc_type: discretization type (INVISCID, or VISCOUS)
+   * face_type: what type of sbpface to use, 1 = DenseFace, 2 = SparseFAce
+
+  **Outputs**
+
+   * dnnz: vector of length div(mesh.numDof, mesh.numDofPerNode) containing
+           the number of blocks each block is connected to in the *local*
+           part of the mesh.  Element type UInt16
+   * onnz: vector, same length as `dnnz`, containing the number of blocks
+           each block is connected to in the *non-local* part of the mesh
+"""
+function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
+                                disc_type::Integer, face_type::Integer)
+# disc_type: 1 = inviscid: stencil defined by f(uL, uR)a
+#           entropy stable code is covered by disc_type == 1 (at least for
+#           meshes with only 1 type of element
+# disc_type: 2 = viscous: stencil defined by f(D*uL, uR)
+  if face_type != 1 && face_type != 2
+    error("unsupported AbstractFace type: $(typeof(sbpface))")
+  end
+
+  @assert disc_type == INVISCID || disc_type == VISCOUS || disc_type == COLORING
+
+  bs = mesh.numDofPerNode
+  @assert mesh.numDof % bs == 0
+  nblocks = div(mesh.numDof, bs)
+
+  dnnz = zeros(UInt16, nblocks)
+  onnz = zeros(UInt16, nblocks)
+
+  # volume terms
+  for i=1:mesh.numEl
+    for j=1:mesh.numNodesPerElement
+      blocknum = div(mesh.dofs[1, j, i] - 1, bs) + 1
+      dnnz[blocknum] += mesh.numNodesPerElement
+    end
+  end
+
+  # face terms
+  for i=1:mesh.numInterfaces
+    iface_i = mesh.interfaces[i]
+
+    permL = sview(sbpface.perm, :, iface_i.faceL)
+    permR = sview(sbpface.perm, :, iface_i.faceR)
+
+    if disc_type == INVISCID
+      for j=1:length(permL)
+        dofL = mesh.dofs[1, permL[j], iface_i.elementL]
+        dofR = mesh.dofs[1, permR[j], iface_i.elementR]
+        block_nodeL = div(dofL - 1, bs) + 1
+        block_nodeR = div(dofR - 1, bs) + 1
+
+        if face_type == 1  # all permL to all permR
+          dnnz[block_nodeL] += length(permR)
+          dnnz[block_nodeR] += length(permL)
+        else  # face_type == 2, diagonalE
+          dnnz[block_nodeL] += 1
+          dnnz[block_nodeR] += 1
+        end
+
+      end  # end loop j
+
+    elseif disc_type == VISCOUS
+      # term if type f(R*D*qL, qR), and the transpose
+      # face_type doesn't matter here because the D*qL term connects all
+      # volume nodes together
+      for j=1:mesh.numNodesPerElement
+        dofL = mesh.dofs[1, j, iface_i.elementL]
+        dofR = mesh.dofs[1, j, iface_i.elementR]
+        block_nodeL = div(dofL - 1, bs) + 1
+        block_nodeR = div(dofR - 1, bs) + 1
+
+        dnnz[block_nodeL] += length(permR)
+        dnnz[block_nodeR] += length(permL)
+      end  # end loop j
+
+    else  # disc_type == COLORING
+      # all volume nodes to all volume nodes
+      for j=1:mesh.numNodesPerElement
+        dofL = mesh.dofs[1, j, iface_i.elementL]
+        dofR = mesh.dofs[1, j, iface_i.elementR]
+        block_nodeL = div(dofL - 1, bs) + 1
+        block_nodeR = div(dofR - 1, bs) + 1
+
+        dnnz[block_nodeL] += mesh.numNodesPerElement
+        dnnz[block_nodeR] += mesh.numNodesPerElement
+      end  # end loop j
+    end  # end if disc_type
+  end  # end loop i
+
+
+  # now do shared faces
+  # only figure out the sparsity for the local element (elementL)
+  for peer=1:mesh.npeers
+    interfaces = mesh.shared_interfaces[peer]
+
+    for i=1:length(interfaces)
+      iface_i = interfaces[i]
+
+      permL = sview(sbpface.perm, :, iface_i.faceL)
+      permR = sview(sbpface.perm, :, iface_i.faceR)
+
+      if disc_type == INVISCID
+        for j=1:length(permL)
+          dofL = mesh.dofs[1, permL[j], iface_i.elementL]
+          block_nodeL = div(dofL - 1, bs) + 1
+
+          if face_type == 1
+            onnz[block_nodeL] += length(permR)
+          else
+            onnz[block_nodeL] += 1
+          end
+
+        end  # end loop j
+
+      elseif disc_type == VISCOUS
+        for j=1:mesh.numNodesPerElement
+          dofL = mesh.dofs[1, j, iface_i.elementL]
+          block_nodeL = div(dofL - 1, bs) + 1
+
+          onnz[block_nodeL] += length(permR)
+        end
+
+      else
+        for j=1:mesh.numNodesPerElement
+          dofL = mesh.dofs[1, j, iface_i.elementL]
+          block_nodeL = div(dofL - 1, bs) + 1
+          onnz[block_nodeL] += mesh.numNodesPerElement
+        end
+
+      end  # end if disc_type
+
+    end  # end loop i
+  end  # end loop peer
+
+  # no need to do boundaries, their sparsity is covered by the volume terms
+
+  return dnnz, onnz
+end
+
+
+
+
+
+
+
+ 
 #------------------------------------------------------------------------------
 # Access methods
 import Base.getindex
@@ -255,11 +668,12 @@ else
     row_end = A.colptr[j+1] - 1
     rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
-#=
+
+    #TODO: comment this out after testing
     if val_idx == 0
       throw(ErrorException("entry $i, $j not found"))
     end
-=#
+
     idx = row_start + val_idx - 1
     A.nzval[idx] = v
 
@@ -267,7 +681,7 @@ else
 
 
   end
-
+#=
   function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
@@ -277,7 +691,7 @@ else
     return A.nzval[idx]
    
   end
-
+=#
 end  # end if band_dense
 function fill!(A::SparseMatrixCSC, val)
   fill!(A.nzval, val)
