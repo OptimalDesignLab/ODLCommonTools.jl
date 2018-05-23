@@ -5,6 +5,7 @@ __precompile__(true)
 
 module ODLCommonTools
 using ArrayViews
+import ArrayViews.view  # use ArrayViews rather than Base.view
 
 include("topo.jl")
 
@@ -455,7 +456,7 @@ end  # end macro
 type functorThatErrors <: FluxType
 end
 
-function call{Tsol, Tres, Tmsh}(obj::functorThatErrors, params::AbstractParamType,
+function (obj::functorThatErrors){Tsol, Tres, Tmsh}(params::AbstractParamType,
               uL::AbstractArray{Tsol,1},
               uR::AbstractArray{Tsol,1},
               aux_vars::AbstractVector{Tres},
@@ -484,7 +485,7 @@ end
 type functorThatErrors_revm <: FluxType_revm
 end
 
-function call{Tsol, Tres, Tmsh}(obj::functorThatErrors_revm, params::AbstractParamType,
+function (obj::functorThatErrors_revm){Tsol, Tres, Tmsh}( params::AbstractParamType,
               uL::AbstractArray{Tsol,1},
               uR::AbstractArray{Tsol,1},
               aux_vars::AbstractVector{Tres},

@@ -1,7 +1,7 @@
 # add some basic wrappers for Lapack, because Julia Base was too lazy to
 # expose an interface that allows reusing all the arrays
 import Base.LinAlg.LAPACK.liblapack, Base.LinAlg.LAPACK.getrf!, Base.LinAlg.LAPACK.getrs!, Base.LinAlg.BlasInt
-import Base.blasfunc
+import Base.LinAlg.BLAS.@blasfunc
 
 @eval begin
 """
@@ -31,7 +31,8 @@ function getrf!(A::ContiguousArrays{Float64}, ipiv::AbstractArray{BlasInt})
   info = Ref{BlasInt}()
   m, n = size(A)
   lda  = size(A, 1)
-  ccall(( $(blasfunc(:dgetrf_)), liblapack), Void,
+  ccall( (@blasfunc($(Symbol("dgetrf_"))), liblapack), Void,
+#  ccall(( :dgetrf_64_, liblapack), Void,
         (Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Float64},
          Ptr{BlasInt}, Ptr{BlasInt}, Ptr{BlasInt}),
         &m, &n, A, &lda, ipiv, info)
@@ -64,7 +65,7 @@ function getrs2!(trans::Char, A::ContiguousArrays{Float64}, ipiv::AbstractVector
   m, n = size(A)
   nrhs = size(B, 2)
   info = Ref{BlasInt}()
-  ccall(($(blasfunc(:dgetrs_)), liblapack), Void,
+  ccall((@blasfunc($(Symbol("dgetrs_"))), liblapack), Void,
         (Ptr{UInt8}, Ptr{BlasInt}, Ptr{BlasInt}, Ptr{Float64}, Ptr{BlasInt},
          Ptr{BlasInt}, Ptr{Float64}, Ptr{BlasInt}, Ptr{BlasInt}),
         &trans, &n, &size(B,2), A, &max(1,stride(A,2)), ipiv, B, &max(1,stride(B,2)), info)
@@ -82,7 +83,7 @@ function laswp!(A::ContiguousArrays{Float64, 1}, k1::BlasInt, k2::BlasInt,
   n = 1
   lda = 1  # length(A) ?
 #  lda = max(1, stride(A, 2))
-  ccall(( $(blasfunc(:dlaswp_)), liblapack), Void, (Ptr{BlasInt}, Ptr{Float64}, 
+  ccall(( @blasfunc($(Symbol("dlaswp_"))), liblapack), Void, (Ptr{BlasInt}, Ptr{Float64}, 
             Ptr{BlasInt}, Ptr{BlasInt}, Ptr{BlasInt}, Ptr{BlasInt}, 
             Ptr{BlasInt}), &n, A, &lda, &k1, &k2, ipiv, &incx)
 
@@ -92,7 +93,7 @@ end
 
 end  # end @eval
 
-import Base.SparseMatrix.UMFPACK: UmfpackLU, umf_ctrl, umf_info,
+import Base.SparseArrays.UMFPACK: UmfpackLU, umf_ctrl, umf_info,
                                   UmfpackIndexTypes, umf_nm, UMFPACK_A,
                                   UMFPACK_At, UMFPACK_Aat, umferror
 

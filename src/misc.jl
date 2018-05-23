@@ -961,7 +961,7 @@ end
 
 function getBranchName(dir=pwd())
 # get the name of the current branch of the git repo in the specified directory
-  nm = readall(`git rev-parse --abbrev-ref HEAD`)
+  nm = readstring(`git rev-parse --abbrev-ref HEAD`)
   return nm[1:end-1]  # remove newline
 
 return end
@@ -995,7 +995,7 @@ function isFieldDefined(obj, req_fieldnames...)
   obj_type = typeof(obj)
   alldefined = true
   for i=1:length(req_fieldnames)
-    fname_i = symbol(req_fieldnames[i])  # convert to symbol if possible
+    fname_i = Symbol(req_fieldnames[i])  # convert to symbol if possible
 
     if !(fname_i in fnames)
       throw(ErrorException("fieldname $fname_i is not a field of $obj_type"))
@@ -1024,7 +1024,7 @@ end
   Outputs:
     fname_stub: new file name, including extension
 """
-function get_parallel_fname(fname::ASCIIString, comm_rank)
+function get_parallel_fname(fname::String, comm_rank)
 
   # figure out where file extension starts
   len = length(fname)
@@ -1073,7 +1073,7 @@ function split_fname(fname::AbstractString)
   end
 
   if sep_loc == 0  # no extension
-    fstem = copy(fname)
+    fstem = identity(fname)
     fext = ""
   else
     fstem = fname[1:(sep_loc-1)]
@@ -1085,11 +1085,11 @@ function split_fname(fname::AbstractString)
 end
 
 """
-  Wrapper around joinpath() that always returns an ASCIIString.
+  Wrapper around joinpath() that always returns an String.
 """
-function joinpath_ascii(str::ASCIIString...)
+function joinpath_ascii(str::String...)
 
-  return ASCIIString(joinpath(str...))
+  return ascii(joinpath(str...))
 end
 
 """

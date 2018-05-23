@@ -462,7 +462,7 @@ facts("--- Testing misc.jl ---") do
   s = printbacktrace()
 #  println("typeof(s) = ", typeof(s))
 #  println("fieldnames(s) = ", fieldnames(s))
-  @fact typeof(s) --> ASCIIString
+  @fact typeof(s) --> String
 
 
 

@@ -2,6 +2,7 @@ using ODLCommonTools
 #using Base.Test
 using FactCheck
 using ArrayViews
+import ArrayViews.view
 
 facts("----- Testing Interface and Boundary -----") do
   # write your own tests here

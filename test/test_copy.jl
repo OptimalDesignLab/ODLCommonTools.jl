@@ -47,6 +47,16 @@ function get_uninitialized_SolutionData(eqn::AbstractSolutionData_)
 
 end
 
+function make_vector{T}(a::AbstractArray{T})
+
+  v =zeros(T, length(a))
+  for i=1:length(a)
+    v[i] = a[i]
+  end
+
+  return v
+end
+
 
 facts("--- Testing copy_array_recursive ---") do
 
@@ -108,9 +118,9 @@ facts("--- Testing copy functions ---") do
 
   test_data = AbstractSolutionData_(
     array_16,
-    collect(array_16),
+    make_vector(array_16),
     array_16_double,
-    collect(array_16),
+    make_vector(array_16),
     array_163,
  #   array_163_double,
     7.0,
@@ -130,9 +140,9 @@ facts("--- Testing copy functions ---") do
 
   test_data_rand = AbstractSolutionData_(
     mat1,
-    collect(mat1),
+    make_vector(mat1),
     mat2,
-    collect(mat2),
+    make_vector(mat2),
     mat_2223,
 #    mat_2223_double,
     float_field
