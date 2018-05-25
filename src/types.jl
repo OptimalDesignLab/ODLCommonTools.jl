@@ -1,7 +1,7 @@
 # sample implementations of the Abstract Types 
 # used for testing, not to be used for real code
 
-type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
+mutable struct ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
   # counts
   numVert::Int
   numEl::Int
@@ -165,12 +165,12 @@ end
 
 
 
-type ConcreteParamType{Tdim}
+mutable struct ConcreteParamType{Tdim}
   t::Float64
   order::Int
   time  # this really should have a concrete type
 
-  function ConcreteParamType(mesh, opts)
+  function ConcreteParamType{Tdim}(mesh, opts) where Tdim
 
     t = 0.0
     order = mesh.order
@@ -180,7 +180,7 @@ type ConcreteParamType{Tdim}
   end
 end
 
-type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
+mutable struct ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
   q::Array{Tsol, 3}
   q_vec::Array{Tsol, 1}
   # AbstractSharedFaceData should be a concrete type
@@ -226,7 +226,7 @@ type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
   end
 end
 
-type ConcreteSBP
+mutable struct ConcreteSBP
   Q::Array{Float64, 2}
 
   function ConcreteSBP()

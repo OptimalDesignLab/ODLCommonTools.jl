@@ -2,7 +2,7 @@ using ODLCommonTools
 using FactCheck
 import ODLCommonTools.get_uninitialized_SolutionData
 
-type AbstractSolutionData_ <: AbstractSolutionData
+mutable struct AbstractSolutionData_ <: AbstractSolutionData
   q::Array{Float64,2}
   q_vec::Array{Float64,1}
   res::Array{Float64,2}
@@ -47,7 +47,7 @@ function get_uninitialized_SolutionData(eqn::AbstractSolutionData_)
 
 end
 
-function make_vector{T}(a::AbstractArray{T})
+function make_vector(a::AbstractArray{T}) where T
 
   v =zeros(T, length(a))
   for i=1:length(a)

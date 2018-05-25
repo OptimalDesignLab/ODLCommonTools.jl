@@ -1,4 +1,4 @@
-  type TestMesh <: AbstractDGMesh
+  mutable struct TestMesh <: AbstractDGMesh
     pertNeighborEls::Array{Int, 2}
     dofs::Array{Int, 3}
     neighbor_nums::Array{Int, 2}
@@ -10,7 +10,7 @@
   end
 
   # type for testing isFieldDefined
-  type TestType
+  mutable struct TestType
     a::Int
     b::Array{Float64, 1}
     function TestType()

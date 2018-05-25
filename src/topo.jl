@@ -1,6 +1,6 @@
 # types and functions describing the topology of the reference element
 
-typealias TopoIdxType Int
+const TopoIdxType = Int
 
 """
 ### ODLCommonTools.ElementTopology
@@ -45,16 +45,16 @@ typealias TopoIdxType Int
                 topology of a face of the element
 """
 
-immutable ElementTopology{Tdim}
+struct ElementTopology{Tdim}
   face_verts::Array{TopoIdxType, 2}
   edge_verts::Array{TopoIdxType, 2}
   face_edges::Array{TopoIdxType, 2}
   face_edges_flipped::Array{Bool, 2}
 
-  function ElementTopology{I1 <: Integer, I2 <: Integer}(
+  function ElementTopology{Tdim}(
                            face_verts::AbstractArray{I1, 2}, 
                            edge_verts::AbstractArray{I2, 2}=zeros(Int, 0,0);
-                           topo2::ElementTopology=ElementTopology{1}() )
+                           topo2::ElementTopology=ElementTopology{1}() ) where {Tdim, I1 <: Integer, I2 <: Integer}
 
     # do sanity checks
 
@@ -98,7 +98,7 @@ immutable ElementTopology{Tdim}
 
   end  # end function
 
-  function ElementTopology()
+  function ElementTopology{Tdim}() where Tdim
     face_verts = zeros(TopoIdxType, 0, 0)
     edge_verts = zeros(face_verts)
     face_edges = zeros(face_verts)

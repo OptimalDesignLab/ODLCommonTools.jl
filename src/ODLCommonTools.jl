@@ -64,7 +64,7 @@ export sview  # don't export this to make the change not completely breaking
   type must implement.
 
 """
-abstract AbstractSolutionData{Tsol, Tres}
+abstract type AbstractSolutionData{Tsol, Tres} end
 
 """
   This abstract type is the supertype for all mesh objects.  Every interface to
@@ -79,21 +79,21 @@ abstract AbstractSolutionData{Tsol, Tres}
   type must implement.
 
 """
-abstract AbstractMesh{Tmsh}
+abstract type AbstractMesh{Tmsh} end
 
 @doc """
 ### ODLCommonTools.AbstractCGMesh
 
   The abstrac type is the supertype of all continuous Galerkin meshes
 """->
-abstract AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh}
+abstract type AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh} end
 
 @doc """
 ### ODLCommonTools.AbstractDGGMesh
 
   The abstract type is the supertype of all discontinuous Galerkin meshes
 """->
-abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
+abstract type AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh} end
 
 """
   This abstract type is the supertype for all Param objects, which hold values 
@@ -107,7 +107,7 @@ abstract AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh}
    
    * Tdim: the dimensionality of the equation being solved (2d or 3d usually)
 """
-abstract AbstractParamType{Tdim}
+abstract type AbstractParamType{Tdim} end
 
 @doc """
 ### ODLCommonTools.Abstract3DArray
@@ -121,7 +121,7 @@ typealias Abstract3DArray{T} AbstractArray{T, 3}
 """
   A typealias for any 4D array.  Element is the static parameter
 """
-typealias Abstract4DArray{T} AbstractArray{T, 4}
+Abstract4DArray{T} =  AbstractArray{T, 4}
 
 """
 Abstract supertype of all SharedFaceData implemenations, used to storing
@@ -131,7 +131,7 @@ the data needed for parallel communication
 
    * Tsol: the datatype of the solution variables
 """
-abstract AbstractSharedFaceData{Tsol}
+abstract type AbstractSharedFaceData{Tsol} end
 
 @doc """
 ### ODLCommonTools.AbstractFunctional
@@ -144,7 +144,7 @@ corresponding to optimization problems should be a subtype of this.
    * Topt
 
 """->
-abstract AbstractFunctional{Topt}
+abstract type AbstractFunctional{Topt} end
 
 
 """
@@ -158,7 +158,7 @@ abstract AbstractFunctional{Topt}
 
 
 """
-abstract AbstractIntegralFunctional{Topt} <: AbstractFunctional{Topt}
+abstract type AbstractIntegralFunctional{Topt} <: AbstractFunctional{Topt} end
 
 """
 
@@ -230,7 +230,7 @@ Used to identify boundary faces in a finite-element grid.
 To mark face 2 of element 7 to be a boundary face, use `Boundary(7,2)`
 
 """->
-immutable Boundary
+struct Boundary
   element::UInt32
   face::UInt8
 end
@@ -261,7 +261,7 @@ orientation 1 relative to element 1 (defintion of orientation TBD).  This can be
 indicated as `Interface(2,5,1,3,1)`
 
 """->
-immutable Interface
+struct Interface
   elementL::UInt32
   elementR::UInt32
   faceL::UInt8
@@ -300,39 +300,39 @@ end
 """
   Abstract supertype of all boundary condition functors
 """
-abstract BCType  # functor boundary condition abstract type
+abstract type BCType end  # functor boundary condition abstract type
 
 """
   Abstract supertype of all boundary condition functors that compute the
   reverse mode with respect to the metrics
 """
-abstract BCType_revm # functor for reverse mode of boundary conditions w.r.t mesh metrics
+abstract type BCType_revm end # functor for reverse mode of boundary conditions w.r.t mesh metrics
 
 """
   Abstract supertype of all source term functors
 """
-abstract SRCType # functor source term abstract type
+abstract type SRCType end # functor source term abstract type
 
 """
   Abstract supertype of all numerical flux functions used by standard DG face
   integrals
 """
-abstract FluxType # functor DG flux abstract type
+abstract type FluxType end # functor DG flux abstract type
 
 """
   Abstract supertype of all numerical flux functions used by standard DG
   face integral that compute the reverse mode with respect to the metrics
 """
-abstract FluxType_revm # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
+abstract type FluxType_revm end # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
 
 
 """
   Like [`FluxType`](@ref), but for flux functions that compute the
   jacobian of the flux with respect to the left and right solutions.
 """
-abstract FluxType_diff
+abstract type FluxType_diff end
 
-abstract FunctionalType # functor for functional abstract type
+abstract type FunctionalType end # functor for functional abstract type
 
 """
   Show method for Boundary objects
@@ -398,9 +398,9 @@ end
     workvec: [dx, dy]
 
 """->
-function calcDiffElementArea{T, T2, T3}(nrm::AbstractArray{T,1}, 
-                                       dxidx::AbstractArray{T2,2},
-                                       workvec::AbstractArray{T3,1})
+function calcDiffElementArea(nrm::AbstractArray{T,1}, 
+                            dxidx::AbstractArray{T2,2},
+                            workvec::AbstractArray{T3,1}) where {T, T2, T3}
   fill!(workvec, zero(T3))
   for di1 = 1:size(nrm,1)
     for di2 = 1:size(nrm,1)
@@ -453,15 +453,15 @@ end  # end macro
   Outputs: none
 
 """->
-type functorThatErrors <: FluxType
+mutable struct functorThatErrors <: FluxType
 end
 
-function (obj::functorThatErrors){Tsol, Tres, Tmsh}(params::AbstractParamType,
+function (obj::functorThatErrors)(params::AbstractParamType,
               uL::AbstractArray{Tsol,1},
               uR::AbstractArray{Tsol,1},
               aux_vars::AbstractVector{Tres},
               nrm::AbstractVector{Tmsh},
-              F::AbstractVector{Tres})
+              F::AbstractVector{Tres}) where {Tsol, Tres, Tmsh}
 
   error("Default functor has been called. You have not properly initialized something.")
   return nothing
@@ -482,15 +482,15 @@ end
   Outputs: none
 
 """->
-type functorThatErrors_revm <: FluxType_revm
+mutable struct functorThatErrors_revm <: FluxType_revm
 end
 
-function (obj::functorThatErrors_revm){Tsol, Tres, Tmsh}( params::AbstractParamType,
+function (obj::functorThatErrors_revm)( params::AbstractParamType,
               uL::AbstractArray{Tsol,1},
               uR::AbstractArray{Tsol,1},
               aux_vars::AbstractVector{Tres},
               nrm::AbstractVector{Tmsh},
-              F::AbstractVector{Tres})
+              F::AbstractVector{Tres}) where {Tsol, Tres, Tmsh}
 
   error("Default functor has been called. You have not properly initialized something.")
   return nothing

@@ -3,13 +3,13 @@
 # only work for arrays (needs to be subtype of DenseArray in order 
 # to call BLAS functions
 
-typealias ContiguousArrays{T, N}  Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
+ContiguousArrays{T, N} =   Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
 
 """
   A read only wrapper type for AbstractArrays. getindex is defined for
   this function but setindex! is not.
 """
-immutable ROView{T, N, P <: AbstractArray} <: DenseArray{T, N}
+struct ROView{T, N, P <: AbstractArray} <: DenseArray{T, N}
   parent::P
 
   function ROView(a::ContiguousArrays)
@@ -20,7 +20,7 @@ end
 """
   Outer constructor
 """
-function ROView{T, N}(A::ContiguousArrays{T, N})
+function ROView(A::ContiguousArrays{T, N}) where {T, N}
   return ROView{T, N, typeof(A)}(A)
 end
 
@@ -40,7 +40,7 @@ linearindexing(A::ROView) = linearindexing(A.parent)
 
 pointer(A::ROView) = pointer(A.parent)
 
-unsafe_convert{T}(::Type{Ptr{T}}, A::ROView) = pointer(A)
+unsafe_convert(::Type{Ptr{T}}, A::ROView) where {T} = pointer(A)
 
 """
   Create a sview and then make a read only view of it
@@ -50,15 +50,15 @@ unsafe_convert{T}(::Type{Ptr{T}}, A::ROView) = pointer(A)
 @inline ro_sview(A::ArrayView, idx...) = ROView(sview(A, idx...))
 
 # useful aliases
-typealias ROVector{T, P} ROView{T, 1, P}
-typealias ROMatrix{T, P} ROView{T, 2, P}
-typealias ROArray{T, N, P} ROView{T, N, P}
-typealias ROContiguousView{T, N, P} ROView{T, N, ContiguousView{T, N, P}}
+ROVector{T, P} =  ROView{T, 1, P}
+ROMatrix{T, P} =  ROView{T, 2, P}
+ROArray{T, N, P} =  ROView{T, N, P}
+ROContiguousView{T, N, P} =  ROView{T, N, ContiguousView{T, N, P}}
 
 
-convert{T, T2}(::Type{Array{T}}, x::ROView{T2}) = ROView(convert(Array{T}, parent(x)))
+convert(::Type{Array{T}}, x::ROView{T2}) where {T, T2} = ROView(convert(Array{T}, parent(x)))
 
-copy!{T, N, T2}(dest::AbstractArray{T, N}, src::ROView{T2, N}) = copy!(dest, src.parent)
+copy!(dest::AbstractArray{T, N}, src::ROView{T2, N}) where {T, N, T2} = copy!(dest, src.parent)
 
 
 import Base.reinterpret
@@ -69,8 +69,8 @@ import Base.reinterpret
   the small linear algebra functions will have to avoid calling BLAS routines in
   that case
 """
-function reinterpret{T, S, N}(::Type{T}, a::UnsafeContiguousView{S},
-                              dims::NTuple{N, Int})
+function reinterpret(::Type{T}, a::UnsafeContiguousView{S},
+                     dims::NTuple{N, Int}) where {T, S, N}
 
 
 # T is the output element type
@@ -102,7 +102,7 @@ function reinterpret{T, S, N}(::Type{T}, a::UnsafeContiguousView{S},
   return new_arr
 end
 
-function reinterpret{T, S}(::Type{T}, a::UnsafeContiguousView{S})
+function reinterpret(::Type{T}, a::UnsafeContiguousView{S}) where {T, S}
 # Blas mat-vec wrapper uses this
 
   size_in = sizeof(S)
@@ -116,23 +116,23 @@ function reinterpret{T, S}(::Type{T}, a::UnsafeContiguousView{S})
 end
 
 
-function reinterpret{T}(::Type{T}, a::UnsafeContiguousView{T})
+function reinterpret(::Type{T}, a::UnsafeContiguousView{T}) where T
 
   return a
 end
 
-function reinterpret{T}(::Type{T}, a::ContiguousView{T})
+function reinterpret(::Type{T}, a::ContiguousView{T}) where T
 
   return a
 end
 
-function reinterpret{T, S, N}(::Type{T}, a::ROView{S}, dims::NTuple{N, Int})
+function reinterpret(::Type{T}, a::ROView{S}, dims::NTuple{N, Int}) where {T, S, N}
 # reinterpret the parent and wrap it in a ROView
 
   return ROView(reinterpret(T, parent(a), dims))
 end
 
-function reinterpret{T}(::Type{T}, a::ROView{T})
+function reinterpret(::Type{T}, a::ROView{T}) where T
 
   return a
 end

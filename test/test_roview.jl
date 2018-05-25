@@ -2,7 +2,7 @@
 #using ODLCommonTools
 #using FactCheck
 
-function sum_cols{T}(A::AbstractMatrix{T})
+function sum_cols(A::AbstractMatrix{T}) where T
 
   val = zero(T)
   for i=1:size(A, 2)
@@ -13,7 +13,7 @@ function sum_cols{T}(A::AbstractMatrix{T})
   return val
 end
 
-function sumit{T}(A::AbstractArray{T})
+function sumit(A::AbstractArray{T}) where T
 
   val = zero(T)
   for i=1:length(A)
