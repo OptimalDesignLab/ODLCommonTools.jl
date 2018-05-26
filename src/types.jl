@@ -123,24 +123,24 @@ mutable struct ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
     mesh.numBC = 2
     mesh.bndryfaces = [Boundary(2, 1), Boundary(3, 2)]
     mesh.bndry_offsets = [1, 2, 3]
-    mesh.bndry_funcs = Array(BCType, mesh.numBC)
+    mesh.bndry_funcs = Array{BCType}(mesh.numBC)
 
     mesh.interfaces = [Interface(2, 3, 2, 3, 0), Interface(4, 7, 1, 3, 2)]
 
-    mesh.dofs = Array(Int, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
+    mesh.dofs = Array{Int}(mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
     for i=1:mesh.numDof
       mesh.dofs[i] = i
     end
 
     mesh.dof_offset = 0
-    mesh.sparsity_bnds = Array(Int, 2, mesh.numDof)
+    mesh.sparsity_bnds = Array{Int}(2, mesh.numDof)
     # make the matrix dense
     for i=1:mesh.numDof
       mesh.sparsity_bnds[1, i] = 1
       mesh.sparsity_bnds[2, i] = mesh.numDof
     end
 
-    mesh.sparsity_nodebnds = Array(Int, 2, mesh.numNodes)
+    mesh.sparsity_nodebnds = Array{Int}(2, mesh.numNodes)
     for i=1:mesh.numNodes
       mesh.sparsity_nodebnds[1, i] = 1
       mesh.sparsity_nodebnds[2, i] = mesh.numNodes
@@ -148,15 +148,15 @@ mutable struct ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
 
     mesh.numColors = 4  # like that's really possible...
     mesh.maxColors = 5
-    mesh.color_masks = Array(BitArray{1}, mesh.numColors)
-    mesh.shared_element_colormasks = Array(Array{BitArray{1}, 1}, mesh.npeers)
-    mesh.pertNeighborEls = Array(Int, 4, mesh.numEl)
+    mesh.color_masks = Array{BitArray{1}}(mesh.numColors)
+    mesh.shared_element_colormasks = Array{Array{BitArray{1}, 1}}(mesh.npeers)
+    mesh.pertNeighborEls = Array{Int}(4, mesh.numEl)
 
-    mesh.bndries_local = Array(Array{Boundary, 1}, mesh.npeers)
-    mesh.bndries_remote = Array(Array{Boundary, 1}, mesh.npeers)
-    mesh.shared_interfaces = Array(Array{Interface, 1}, mesh.npeers)
-    mesh.shared_element_offsets = Array(Int, 2)
-    mesh.local_element_lists = Array(Array{Int, 1}, mesh.npeers)
+    mesh.bndries_local = Array{Array{Boundary, 1}}(mesh.npeers)
+    mesh.bndries_remote = Array{Array{Boundary, 1}}(mesh.npeers)
+    mesh.shared_interfaces = Array{Array{Interface, 1}}(mesh.npeers)
+    mesh.shared_element_offsets = Array{Int}(2)
+    mesh.local_element_lists = Array{Array{Int, 1}}(mesh.npeers)
 
     return mesh
   end
@@ -203,12 +203,12 @@ mutable struct ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tr
     numNodesPerFace = mesh.numNodesPerFace
     numDof = mesh.numDof
 
-    q = Array(Tsol, numDofPerNode, numNodesPerElement, numEl)
-    q_vec = Array(Tsol, numDof)
+    q = Array{Tsol}(numDofPerNode, numNodesPerElement, numEl)
+    q_vec = Array{Tsol}(numDof)
     # the elements of this array should be populated as well
-    shared_data = Array(AbstractSharedFaceData{Tsol}, mesh.npeers)
-    res = Array(Tres, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
-    res_vec = Array(Tres, mesh.numDof)
+    shared_data = Array{AbstractSharedFaceData{Tsol}}(mesh.npeers)
+    res = Array{Tres}(mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
+    res_vec = Array{Tres}(mesh.numDof)
     M = ones(numDof)
     Minv = ones(numDof)
     

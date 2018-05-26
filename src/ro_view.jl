@@ -97,7 +97,7 @@ function reinterpret(::Type{T}, a::UnsafeContiguousView{S},
   end
 
   pnew = Ptr{T}(a.ptr)
-  new_arr = UnsafeContiguousView{T, N}(pnew, len_out, dims)
+  new_arr = UnsafeContiguousView(pnew, dims)
 
   return new_arr
 end

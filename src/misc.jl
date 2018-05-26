@@ -202,7 +202,7 @@ end
 function smallmatvec(A::AbstractArray{T,2}, x::AbstractArray{T2, 1}) where {T, T2}
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array(T3, m)
+  b = Array{T3}(m)
   smallmatvec!(A, x, b)
 end
 
@@ -274,7 +274,7 @@ function smallmatTvec(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1}) where {T,
 
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array(T3, n)
+  b = Array{T3}(n)
   smallmatTvec!(A, x, b)
 end
 
@@ -400,7 +400,7 @@ function smallmatmat(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, T
   (m,n) = size(A)
   (xn, p) = size(x)
   T3 = promote_type(T, T2)
-  b = Array(T3, m, p)
+  b = Array{T3}( m, p)
   smallmatmat!(A, x, b)
 end
 
@@ -526,7 +526,7 @@ function smallmatmatT(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, 
   (m,n) = size(A)
   (p, xn) = size(x)
   T3 = promote_type(T, T2)
-  b = Array(T3, n, p)
+  b = Array{T3}( n, p)
   smallmatmatT!(A, x, b)
 end
 
@@ -666,7 +666,7 @@ function checkIdenticalColumns(A::AbstractArray{T,2},
   (m,n) = size(A)
   cnt = 0
   
-  col = view(A, :, colnum)
+  col = sview(A, :, colnum)
   is_same = zeros(Bool, n)
   
   for i=1:n  # loop over columns
@@ -674,7 +674,7 @@ function checkIdenticalColumns(A::AbstractArray{T,2},
     if i == colnum  # skip the specified column
       continue
     end
-    col_i = view(A, :, i)
+    col_i = sview(A, :, i)
     diff_norm = norm(col - col_i)/m
   
     if diff_norm < tol
@@ -858,7 +858,7 @@ mutable struct FIFOQueue{T}
   function FIFOQueue{T}(; size_hint=1, fac=1.4) where T
     # size_hint = initial size of array
     size_hint = max(size_hint, 1)
-    arr = Array(T, size_hint)
+    arr = Array{T}(size_hint)
     tail = 0
     head = 1
    return new(arr, tail, head, fac)

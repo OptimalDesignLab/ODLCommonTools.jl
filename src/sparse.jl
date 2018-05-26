@@ -61,8 +61,8 @@ function SparseMatrixCSC(mesh::AbstractDGMesh, ::Type{Tv}) where Tv
   # visit the elements in the perm order to calculate colptrs
   starting_offset = zeros(eltype(mesh.dofs), mesh.numEl)
   starting_offset[1] = 0
-  colptr = Array(Int64, ndof+1)
-  rowvals = zeros(Int64, nvals)
+  colptr = Array{Int64}(ndof+1)
+  rowvals = zeros{Int64}( nvals)
   colptr[1] = 1
   colptr_pos = 2
   nnz_curr = 0  # current element number of neighbors
@@ -162,7 +162,7 @@ function SparseMatrixCSC(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType) where 
   num_nz = 0  # accumulate number of non zero entries
 
   m = maximum(sparse_bnds)  # get number of rows
-  colptr = Array(Int64, n+1)  # should be Ti
+  colptr = Array{Int64}(n+1)  # should be Ti
 
   if sparse_bnds[1,1] != 0
     colptr[1] = 1
@@ -666,7 +666,7 @@ else
   function setindex!(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer) where {T, Ti}
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
-    rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
+    rowvals_extract = sview(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
 
     #TODO: comment this out after testing
@@ -685,7 +685,7 @@ else
   function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
-    rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
+    rowvals_extract = sview(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
     idx = row_start + val_idx -1
     return A.nzval[idx]

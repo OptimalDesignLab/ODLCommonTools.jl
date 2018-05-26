@@ -116,12 +116,12 @@ abstract type AbstractParamType{Tdim} end
   specifying the element datatype.
 
 """->
-typealias Abstract3DArray{T} AbstractArray{T, 3}
+const Abstract3DArray{T} = AbstractArray{T, 3}
 
 """
   A typealias for any 4D array.  Element is the static parameter
 """
-Abstract4DArray{T} =  AbstractArray{T, 4}
+const Abstract4DArray{T} =  AbstractArray{T, 4}
 
 """
 Abstract supertype of all SharedFaceData implemenations, used to storing
@@ -419,9 +419,9 @@ end
 """->
 global const safe_views = true
 if safe_views
-  global const sview = ArrayViews.view
+  global const sview = ArrayViews.aview
 else
-  global const sview = ArrayViews.unsafe_view
+  global const sview = ArrayViews.unsafe_aview
 end
 
 """
