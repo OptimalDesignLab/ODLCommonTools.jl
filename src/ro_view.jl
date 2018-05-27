@@ -12,7 +12,7 @@ ContiguousArrays{T, N} =   Union{Array{T, N}, ContiguousView{T, N}, UnsafeContig
 struct ROView{T, N, P <: AbstractArray} <: DenseArray{T, N}
   parent::P
 
-  function ROView(a::ContiguousArrays)
+  function ROView{T, N, P}(a::ContiguousArrays) where {T, N, P}
     return new(a)
   end
 end
@@ -26,7 +26,7 @@ end
 
 
 # define some functions by delegating to parent array
-import Base: size, length, getindex, parent, convert, linearindexing, convert, unsafe_convert, pointer
+import Base: size, length, getindex, parent, convert, IndexStyle, convert, unsafe_convert, pointer
 
 size(A::ROView) = size(A.parent)
 length(A::ROView) = length(A.parent)
@@ -36,7 +36,7 @@ length(A::ROView) = length(A.parent)
 
 parent(A::ROView) = A.parent
 
-linearindexing(A::ROView) = linearindexing(A.parent)
+IndexStyle(A::ROView) = IndexStyle(A.parent)
 
 pointer(A::ROView) = pointer(A.parent)
 

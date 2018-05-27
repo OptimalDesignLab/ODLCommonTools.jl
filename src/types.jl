@@ -78,9 +78,9 @@ mutable struct ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
   shared_element_offsets::Array{Int, 1}
   local_element_lists::Array{Array{Int, 1}, 1}
 
-  function ConcreteDGMesh(opts)
+  function ConcreteDGMesh{Tmsh}(opts) where {Tmsh}
 
-    mesh = new()  # incomplete initialization
+    mesh = new{Tmsh}()  # incomplete initialization
 
     # make up values
     mesh.numVert = 5
@@ -195,7 +195,7 @@ mutable struct ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tr
   majorIterationCallback::Function
   params::ConcreteParamType{2}
 
-  function ConcreteSolutionData(mesh, sbp, opts)
+  function ConcreteSolutionData{Tsol, Tres}(mesh, sbp, opts)  where {Tsol, Tres}
 
     numDofPerNode = mesh.numDofPerNode
     numNodesPerElement = mesh.numNodesPerElement
