@@ -12,7 +12,7 @@ using PkgFix  # from now on, use PkgFix instead of Pkg for everything
 
 
 global const ARRAYVIEWS_URL = "https://github.com/JaredCrean2/ArrayViews.jl.git"
-global const ARRAYVIEWS_VER = "fix_depwarn"
+global const ARRAYVIEWS_VER = "work"
 
 pkg_dict = PkgFix.installed()
 
