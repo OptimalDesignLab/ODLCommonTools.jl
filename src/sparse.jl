@@ -25,7 +25,7 @@ import Base.SparseMatrixCSC
 
    * mat: the matrix
 """
-function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv})
+function SparseMatrixCSC(mesh::AbstractDGMesh, ::Type{Tv}) where Tv
 # construct a SparseMatrixCSC that preallocates the space needed for values
 # tightly
 # this should be exact for DG and a slight overestimate for CG
@@ -61,8 +61,8 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv})
   # visit the elements in the perm order to calculate colptrs
   starting_offset = zeros(eltype(mesh.dofs), mesh.numEl)
   starting_offset[1] = 0
-  colptr = Array(Int64, ndof+1)
-  rowvals = zeros(Int64, nvals)
+  colptr = Array{Int64}(ndof+1)
+  rowvals = zeros{Int64}( nvals)
   colptr[1] = 1
   colptr_pos = 2
   nnz_curr = 0  # current element number of neighbors
@@ -137,7 +137,7 @@ function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv})
 
 end
 
-function copyDofs{T}(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1})
+function copyDofs(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1}) where T
   pos = 1
   for i=1:size(src, 2)
     for j=1:size(src, 1)
@@ -148,7 +148,7 @@ function copyDofs{T}(src::AbstractArray{T, 2}, dest::AbstractArray{T, 1})
 end
 
 
-function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
+function SparseMatrixCSC(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType) where Ti
 # TODO: @doc this
 # preallocate matrix based on maximum, minimum non zero
 # rows in each column
@@ -162,7 +162,7 @@ function SparseMatrixCSC{Ti}(sparse_bnds::AbstractArray{Ti, 2}, Tv::DataType)
   num_nz = 0  # accumulate number of non zero entries
 
   m = maximum(sparse_bnds)  # get number of rows
-  colptr = Array(Int64, n+1)  # should be Ti
+  colptr = Array{Int64}(n+1)  # should be Ti
 
   if sparse_bnds[1,1] != 0
     colptr[1] = 1
@@ -240,7 +240,7 @@ global const COLORING=3
    * mat: the matrix
 
 """
-function SparseMatrixCSC{Tv}(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Integer, face_type::Integer)
+function SparseMatrixCSC(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Integer, face_type::Integer) where Tv
 
   sbpface = mesh.sbpface
   dnnz, onnz = getBlockSparsityCounts(mesh, mesh.sbpface, disc_type, face_type)
@@ -612,7 +612,7 @@ const band_dense = false
 
 if band_dense
   # setindex for dense within the band matrix
-  function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
+  function setindex!(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer) where {T, Ti}
   # TODO: @doc this
   # get a nonzero value from A
   # for speed, no bounds checking
@@ -638,7 +638,7 @@ if band_dense
 
   end
 
-  function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
+  function getindex(A::SparseMatrixCSC{T}, i::Integer, j::Integer) where T
   # TODO: @doc this
   # get a nonzero value from A
   # for speed, no bounds checking
@@ -663,10 +663,10 @@ if band_dense
 
 
 else
-  function setindex!{T, Ti}(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer)
+  function setindex!(A::SparseMatrixCSC{T, Ti}, v, i::Integer, j::Integer) where {T, Ti}
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
-    rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
+    rowvals_extract = sview(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
 
     #TODO: comment this out after testing
@@ -685,7 +685,7 @@ else
   function getindex{T}(A::SparseMatrixCSC{T}, i::Integer, j::Integer)
     row_start = A.colptr[j]
     row_end = A.colptr[j+1] - 1
-    rowvals_extract = unsafe_view(A.rowval, row_start:row_end)
+    rowvals_extract = sview(A.rowval, row_start:row_end)
     val_idx = fastfind(rowvals_extract, i)
     idx = row_start + val_idx -1
     return A.nzval[idx]
@@ -717,7 +717,7 @@ end
   Outputs:
     idx: the index of the array containing the value, 0 if not found
 """->
-function fastfind{T <: Integer}(a::AbstractArray{T}, val)
+function fastfind(a::AbstractArray{T}, val) where T <: Integer
 
   foundflag = false
   lbound = 1

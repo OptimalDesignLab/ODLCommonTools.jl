@@ -1,6 +1,6 @@
 # types and functions describing the topology of the reference element
 
-typealias TopoIdxType Int
+const TopoIdxType = Int
 
 """
 ### ODLCommonTools.ElementTopology
@@ -45,16 +45,16 @@ typealias TopoIdxType Int
                 topology of a face of the element
 """
 
-immutable ElementTopology{Tdim}
+struct ElementTopology{Tdim}
   face_verts::Array{TopoIdxType, 2}
   edge_verts::Array{TopoIdxType, 2}
   face_edges::Array{TopoIdxType, 2}
   face_edges_flipped::Array{Bool, 2}
 
-  function ElementTopology{I1 <: Integer, I2 <: Integer}(
+  function ElementTopology{Tdim}(
                            face_verts::AbstractArray{I1, 2}, 
                            edge_verts::AbstractArray{I2, 2}=zeros(Int, 0,0);
-                           topo2::ElementTopology=ElementTopology{1}() )
+                           topo2::ElementTopology=ElementTopology{1}() ) where {Tdim, I1 <: Integer, I2 <: Integer}
 
     # do sanity checks
 
@@ -78,8 +78,8 @@ immutable ElementTopology{Tdim}
       # this is not strictly necessary (some people might reverse the direction
       # of the 3rd edge) but seems good enough for now
       edge_verts = face_verts
-      face_edges = Array(TopoIdxType, 1, 3)
-      face_edges_flipped = Array(Bool, 1, 3)
+      face_edges = Array{TopoIdxType}(1, 3)
+      face_edges_flipped = Array{Bool}(1, 3)
 
       for i=1:3
         face_edges[1, i] = i
@@ -87,8 +87,8 @@ immutable ElementTopology{Tdim}
       end
     elseif Tdim == 3
       if size(edge_verts, 1) == 0  # edge verts not known
-        face_edges = Array(TopoIdxType, 0, 0)
-        face_edges_flipped = Array(Bool, 0, 0)
+        face_edges = Array{TopoIdxType}(0, 0)
+        face_edges_flipped = Array{Bool}(0, 0)
       else
         face_edges, face_edges_flipped = construct_face_edges(topo2, face_verts, edge_verts)
       end
@@ -98,11 +98,11 @@ immutable ElementTopology{Tdim}
 
   end  # end function
 
-  function ElementTopology()
+  function ElementTopology{Tdim}() where Tdim
     face_verts = zeros(TopoIdxType, 0, 0)
     edge_verts = zeros(face_verts)
     face_edges = zeros(face_verts)
-    face_edges_flipped = Array(Bool, 0, 0)
+    face_edges_flipped = Array{Bool}(0, 0)
     return new(face_verts, edge_verts, face_edges, face_edges_flipped)
   end
 end
@@ -153,7 +153,7 @@ function construct_face_edges(topo2::ElementTopology{2},
   face_edges = zeros(TopoIdxType, numEdgesPerFace, numFacesPerElement)
 
   # is the edge of the face oriented the same as the edge of the tet
-  face_edges_flipped = Array(Bool, numEdgesPerFace, numFacesPerElement)
+  face_edges_flipped = Array{Bool}(numEdgesPerFace, numFacesPerElement)
 
   for i=1:numFacesPerElement
     for j=1:numEdgesPerFace  # loop over edges on this face

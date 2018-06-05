@@ -1,7 +1,7 @@
 # sample implementations of the Abstract Types 
 # used for testing, not to be used for real code
 
-type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
+mutable struct ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
   # counts
   numVert::Int
   numEl::Int
@@ -78,9 +78,9 @@ type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
   shared_element_offsets::Array{Int, 1}
   local_element_lists::Array{Array{Int, 1}, 1}
 
-  function ConcreteDGMesh(opts)
+  function ConcreteDGMesh{Tmsh}(opts) where {Tmsh}
 
-    mesh = new()  # incomplete initialization
+    mesh = new{Tmsh}()  # incomplete initialization
 
     # make up values
     mesh.numVert = 5
@@ -123,24 +123,24 @@ type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
     mesh.numBC = 2
     mesh.bndryfaces = [Boundary(2, 1), Boundary(3, 2)]
     mesh.bndry_offsets = [1, 2, 3]
-    mesh.bndry_funcs = Array(BCType, mesh.numBC)
+    mesh.bndry_funcs = Array{BCType}(mesh.numBC)
 
     mesh.interfaces = [Interface(2, 3, 2, 3, 0), Interface(4, 7, 1, 3, 2)]
 
-    mesh.dofs = Array(Int, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
+    mesh.dofs = Array{Int}(mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
     for i=1:mesh.numDof
       mesh.dofs[i] = i
     end
 
     mesh.dof_offset = 0
-    mesh.sparsity_bnds = Array(Int, 2, mesh.numDof)
+    mesh.sparsity_bnds = Array{Int}(2, mesh.numDof)
     # make the matrix dense
     for i=1:mesh.numDof
       mesh.sparsity_bnds[1, i] = 1
       mesh.sparsity_bnds[2, i] = mesh.numDof
     end
 
-    mesh.sparsity_nodebnds = Array(Int, 2, mesh.numNodes)
+    mesh.sparsity_nodebnds = Array{Int}(2, mesh.numNodes)
     for i=1:mesh.numNodes
       mesh.sparsity_nodebnds[1, i] = 1
       mesh.sparsity_nodebnds[2, i] = mesh.numNodes
@@ -148,15 +148,15 @@ type ConcreteDGMesh{Tmsh} <: AbstractDGMesh{Tmsh}
 
     mesh.numColors = 4  # like that's really possible...
     mesh.maxColors = 5
-    mesh.color_masks = Array(BitArray{1}, mesh.numColors)
-    mesh.shared_element_colormasks = Array(Array{BitArray{1}, 1}, mesh.npeers)
-    mesh.pertNeighborEls = Array(Int, 4, mesh.numEl)
+    mesh.color_masks = Array{BitArray{1}}(mesh.numColors)
+    mesh.shared_element_colormasks = Array{Array{BitArray{1}, 1}}(mesh.npeers)
+    mesh.pertNeighborEls = Array{Int}(4, mesh.numEl)
 
-    mesh.bndries_local = Array(Array{Boundary, 1}, mesh.npeers)
-    mesh.bndries_remote = Array(Array{Boundary, 1}, mesh.npeers)
-    mesh.shared_interfaces = Array(Array{Interface, 1}, mesh.npeers)
-    mesh.shared_element_offsets = Array(Int, 2)
-    mesh.local_element_lists = Array(Array{Int, 1}, mesh.npeers)
+    mesh.bndries_local = Array{Array{Boundary, 1}}(mesh.npeers)
+    mesh.bndries_remote = Array{Array{Boundary, 1}}(mesh.npeers)
+    mesh.shared_interfaces = Array{Array{Interface, 1}}(mesh.npeers)
+    mesh.shared_element_offsets = Array{Int}(2)
+    mesh.local_element_lists = Array{Array{Int, 1}}(mesh.npeers)
 
     return mesh
   end
@@ -165,12 +165,12 @@ end
 
 
 
-type ConcreteParamType{Tdim}
+mutable struct ConcreteParamType{Tdim}
   t::Float64
   order::Int
   time  # this really should have a concrete type
 
-  function ConcreteParamType(mesh, opts)
+  function ConcreteParamType{Tdim}(mesh, opts) where Tdim
 
     t = 0.0
     order = mesh.order
@@ -180,7 +180,7 @@ type ConcreteParamType{Tdim}
   end
 end
 
-type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
+mutable struct ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
   q::Array{Tsol, 3}
   q_vec::Array{Tsol, 1}
   # AbstractSharedFaceData should be a concrete type
@@ -195,7 +195,7 @@ type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
   majorIterationCallback::Function
   params::ConcreteParamType{2}
 
-  function ConcreteSolutionData(mesh, sbp, opts)
+  function ConcreteSolutionData{Tsol, Tres}(mesh, sbp, opts)  where {Tsol, Tres}
 
     numDofPerNode = mesh.numDofPerNode
     numNodesPerElement = mesh.numNodesPerElement
@@ -203,12 +203,12 @@ type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
     numNodesPerFace = mesh.numNodesPerFace
     numDof = mesh.numDof
 
-    q = Array(Tsol, numDofPerNode, numNodesPerElement, numEl)
-    q_vec = Array(Tsol, numDof)
+    q = Array{Tsol}(numDofPerNode, numNodesPerElement, numEl)
+    q_vec = Array{Tsol}(numDof)
     # the elements of this array should be populated as well
-    shared_data = Array(AbstractSharedFaceData{Tsol}, mesh.npeers)
-    res = Array(Tres, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
-    res_vec = Array(Tres, mesh.numDof)
+    shared_data = Array{AbstractSharedFaceData{Tsol}}(mesh.npeers)
+    res = Array{Tres}(mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
+    res_vec = Array{Tres}(mesh.numDof)
     M = ones(numDof)
     Minv = ones(numDof)
     
@@ -226,7 +226,7 @@ type ConcreteSolutionData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
   end
 end
 
-type ConcreteSBP
+mutable struct ConcreteSBP
   Q::Array{Float64, 2}
 
   function ConcreteSBP()

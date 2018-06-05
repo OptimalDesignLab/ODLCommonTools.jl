@@ -67,7 +67,7 @@ end
             allowed.  This function does not attempt to handle this case, and
             it will likely result in a StackOverflow error.
 """
-function copy_array_recursive!{Td <: AbstractArray, Ts <: AbstractArray}(dest::AbstractArray{Td}, src::AbstractArray{Ts})
+function copy_array_recursive!(dest::AbstractArray{Td}, src::AbstractArray{Ts}) where {Td <: AbstractArray, Ts <: AbstractArray}
 
   @assert length(dest) == length(src)
 
@@ -80,8 +80,8 @@ function copy_array_recursive!{Td <: AbstractArray, Ts <: AbstractArray}(dest::A
   return nothing
 end
 
-function copy_array_recursive!{Td, Ts}(dest::AbstractArray{Td},
-                                        src::AbstractArray{Ts})
+function copy_array_recursive!(dest::AbstractArray{Td},
+                                src::AbstractArray{Ts}) where {Td, Ts}
 
   copy!(dest, src)
 

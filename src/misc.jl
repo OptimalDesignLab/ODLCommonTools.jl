@@ -65,8 +65,8 @@ end
 
   Aliasing restrictions: same as BLAS, b cannot alias anything
 """
-function smallmatvec!{T, T2, T3}(A::AbstractArray{T,2}, 
-           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1})
+function smallmatvec!(A::AbstractArray{T,2}, 
+           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1}) where {T, T2, T3}
 
   m, n = size(A)
 
@@ -114,8 +114,8 @@ function smallmatvec!(A::AbstractArray{Complex128,2},
   return b
 end
 
-function smallmatvec!{P<:Array, P2<:Array}(A::ROContiguousView{Complex128,2, P}, 
-           x::AbstractArray{Float64,1}, b::ContiguousView{Complex128, 1, P2})
+function smallmatvec!(A::ROContiguousView{Complex128,2, P}, 
+           x::AbstractArray{Float64,1}, b::ContiguousView{Complex128, 1, P2}) where {P<:Array, P2<:Array}
 # this is the case where we can't reinterpret as required by the BLAS interface
 
   smallmatvec_kernel!(A, x, b)
@@ -124,8 +124,8 @@ function smallmatvec!{P<:Array, P2<:Array}(A::ROContiguousView{Complex128,2, P},
 end
 
 
-function smallmatvec!{P<:Array}(A::ROContiguousView{Complex128,2, P}, 
-           x::AbstractArray{Float64,1}, b::AbstractArray{Complex128, 1})
+function smallmatvec!(A::ROContiguousView{Complex128,2, P}, 
+           x::AbstractArray{Float64,1}, b::AbstractArray{Complex128, 1}) where P<:Array
 # this is the case where we can't reinterpret as required by the BLAS interface
 
   smallmatvec_kernel!(A, x, b)
@@ -137,8 +137,8 @@ end
 
 
 
-function smallmatvec_kernel!{T, T2, T3}(A::AbstractArray{T,2}, 
-           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1})
+function smallmatvec_kernel!(A::AbstractArray{T,2}, 
+           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1}) where {T, T2, T3}
 # TODO: this comment needs to be a @doc
 # performs matrix vector multiplication for small matrices
 # b gets overwritten
@@ -173,9 +173,9 @@ function smallmatvec_kernel!{T, T2, T3}(A::AbstractArray{T,2},
 end   # end of smallmatvec! function
 
 # reverse mode to back propigate b to x
-function smallmatvec_revv!{T, T2, T3}(A::AbstractArray{T,2}, 
+function smallmatvec_revv!(A::AbstractArray{T,2}, 
            x_bar::AbstractArray{T2,1}, 
-           b_bar::AbstractArray{T3, 1})
+           b_bar::AbstractArray{T3, 1}) where {T, T2, T3}
 
   (m,n) = size(A)
   xm = length(x_bar)
@@ -199,10 +199,10 @@ function smallmatvec_revv!{T, T2, T3}(A::AbstractArray{T,2},
 end
 
 
-function smallmatvec{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 1})
+function smallmatvec(A::AbstractArray{T,2}, x::AbstractArray{T2, 1}) where {T, T2}
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array(T3, m)
+  b = Array{T3}(m)
   smallmatvec!(A, x, b)
 end
 
@@ -270,11 +270,11 @@ function smallmatTvec_kernel!(A::AbstractMatrix, x::AbstractVector, b::AbstractV
 end
 
 
-function smallmatTvec{T, T2}(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1})
+function smallmatTvec(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1}) where {T, T2}
 
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array(T3, n)
+  b = Array{T3}(n)
   smallmatTvec!(A, x, b)
 end
 
@@ -296,9 +296,9 @@ end
 
    Aliasing restrictions: no aliasing allowed
 """
-function smallmatmat!{T, T2, T3}(A::AbstractArray{T, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{T3, 2})
+function smallmatmat!(A::AbstractArray{T, 2}, 
+                      x::AbstractArray{T2, 2}, 
+                      b::AbstractArray{T3, 2}) where {T, T2, T3}
   m, n = size(A)
   if m < 6 && n < 9
     smallmatmat_kernel!(A, x, b)
@@ -311,54 +311,54 @@ end
 
 # don't call BLAS when reinterpret isn't supported
 
-function smallmatmat!{T2}(A::ContiguousView{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmat!(A::ContiguousView{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::ContiguousView{Complex128, 2}) where T2
 
   smallmatmat_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmat!{T2}(A::AbstractArray{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmat!(A::AbstractArray{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::ContiguousView{Complex128, 2}) where T2
 
   smallmatmat_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmat!{T2}(A::ContiguousView{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{Complex128, 2})
+function smallmatmat!(A::ContiguousView{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::AbstractArray{Complex128, 2}) where T2
 
   smallmatmat_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmat!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmat!(A::ROContiguousView{Complex128, 2, P}, 
+                   x::AbstractArray{T2, 2}, 
+                   b::ContiguousView{Complex128, 2}) where {T2, P<:Array}
 
   smallmatmat_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmat!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{Complex128, 2})
+function smallmatmat!(A::ROContiguousView{Complex128, 2, P}, 
+                   x::AbstractArray{T2, 2}, 
+                   b::AbstractArray{Complex128, 2}) where {T2, P<:Array}
 
   smallmatmat_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmat_kernel!{T, T2, T3}(A::AbstractArray{T, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{T3, 2})
+function smallmatmat_kernel!(A::AbstractArray{T, 2}, 
+                      x::AbstractArray{T2, 2}, 
+                      b::AbstractArray{T3, 2}) where {T, T2, T3}
 # TODO: this comment needs to be a @doc
 # multiplies matrix A by matrix x, writing the solution to matrix b
 # both dimensions of A and the final dimension of x are used for looping
@@ -396,11 +396,11 @@ function smallmatmat_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
 end     # end of smallmatmat! function
 
 
-function smallmatmat{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
+function smallmatmat(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, T2}
   (m,n) = size(A)
   (xn, p) = size(x)
   T3 = promote_type(T, T2)
-  b = Array(T3, m, p)
+  b = Array{T3}( m, p)
   smallmatmat!(A, x, b)
 end
 
@@ -421,9 +421,9 @@ end
 
    * b: output matrix, overwritten
 """
-function smallmatmatT!{T, T2, T3}(A::AbstractArray{T, 2},
-                                  x::AbstractArray{T2, 2},
-                                  b::AbstractArray{T3, 2})
+function smallmatmatT!(A::AbstractArray{T, 2},
+                       x::AbstractArray{T2, 2},
+                       b::AbstractArray{T3, 2}) where {T, T2, T3}
   m, n = size(A)
   if m < 7 && n < 10
     smallmatmatT_kernel!(A, x, b)
@@ -436,54 +436,54 @@ end
 
 # don't call BLAS when reinterpret isn't supported
 
-function smallmatmatT!{T2}(A::ContiguousView{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmatT!(A::ContiguousView{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::ContiguousView{Complex128, 2}) where T2
 
   smallmatmatT_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmatT!{T2}(A::AbstractArray{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmatT!(A::AbstractArray{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::ContiguousView{Complex128, 2}) where T2
 
   smallmatmatT_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmatT!{T2}(A::ContiguousView{Complex128, 2}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{Complex128, 2})
+function smallmatmatT!(A::ContiguousView{Complex128, 2}, 
+                             x::AbstractArray{T2, 2}, 
+                             b::AbstractArray{Complex128, 2}) where T2
 
   smallmatmatT_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmatT!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::ContiguousView{Complex128, 2})
+function smallmatmatT!(A::ROContiguousView{Complex128, 2, P}, 
+                   x::AbstractArray{T2, 2}, 
+                   b::ContiguousView{Complex128, 2}) where {T2, P<:Array}
 
   smallmatmatT_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmatT!{T2, P<:Array}(A::ROContiguousView{Complex128, 2, P}, 
-                                 x::AbstractArray{T2, 2}, 
-                                 b::AbstractArray{Complex128, 2})
+function smallmatmatT!(A::ROContiguousView{Complex128, 2, P}, 
+                   x::AbstractArray{T2, 2}, 
+                   b::AbstractArray{Complex128, 2}) where {T2, P<:Array}
 
   smallmatmatT_kernel!(A, x, b)
 
   return b
 end
  
-function smallmatmatT_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
-                                  x::AbstractArray{T2, 2},
-                                  b::AbstractArray{T3, 2})
+function smallmatmatT_kernel!(A::AbstractArray{T, 2},
+                       x::AbstractArray{T2, 2},
+                       b::AbstractArray{T3, 2}) where {T, T2, T3}
 # TODO: this comment needs to be a @doc
 # multiplies A by x.', storing result in b
 
@@ -522,11 +522,11 @@ function smallmatmatT_kernel!{T, T2, T3}(A::AbstractArray{T, 2},
 end     # end of smallmatmatT! function
 
 
-function smallmatmatT{T, T2}(A::AbstractArray{T,2}, x::AbstractArray{T2, 2})
+function smallmatmatT(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, T2}
   (m,n) = size(A)
   (p, xn) = size(x)
   T3 = promote_type(T, T2)
-  b = Array(T3, n, p)
+  b = Array{T3}( n, p)
   smallmatmatT!(A, x, b)
 end
 
@@ -548,9 +548,9 @@ end
 
   Aliasing restrictions: no aliasing
 """
-function smallmatTmat!{T, T2, T3}(A::AbstractMatrix{T},
-                                         x::AbstractMatrix{T2},
-                                         b::AbstractMatrix{T3})
+function smallmatTmat!(A::AbstractMatrix{T},
+                              x::AbstractMatrix{T2},
+                              b::AbstractMatrix{T3}) where {T, T2, T3}
   m, n = size(A)
   if m < 10 && n < 7
     smallmatTmat_kernel!(A, x, b)
@@ -565,8 +565,8 @@ end
 # with reinterpret issues
 
 #TODO: performance test
-function smallmatTmat_kernel!{T, T2, T3}(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
-                                  b::AbstractMatrix{T3})
+function smallmatTmat_kernel!(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
+                       b::AbstractMatrix{T3}) where {T, T2, T3}
 
   n, m = size(A)
   xn, p = size(x)
@@ -591,7 +591,7 @@ function smallmatTmat_kernel!{T, T2, T3}(A::AbstractMatrix{T}, x::AbstractMatrix
   return nothing
 end
 
-function smallmatTmat{T, T2}(A::AbstractMatrix{T}, x::AbstractMatrix{T2})
+function smallmatTmat(A::AbstractMatrix{T}, x::AbstractMatrix{T2}) where {T, T2}
 
   n, m = size(A)
   n, p = size(x)
@@ -602,7 +602,7 @@ function smallmatTmat{T, T2}(A::AbstractMatrix{T}, x::AbstractMatrix{T2})
 end
 
 
-function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
+function checkZeroRows(A::AbstractArray{T,2}, tol::AbstractFloat) where T <: Number
 # checks each row of a matrix for zeros 
 # 2d matrices only
 # returns the integer number of zero rows, and a Bool
@@ -628,7 +628,7 @@ function checkZeroRows{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
 end   # end of checkZeroRows function
 
 
-function checkZeroColumns{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
+function checkZeroColumns(A::AbstractArray{T,2}, tol::AbstractFloat) where T <: Number
 # TODO: @doc this
 # checks each column of a matrix for zeros
 # 2d matrices only
@@ -655,9 +655,9 @@ function checkZeroColumns{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat
 end   # end checkZeroColumns function
 
 
-function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2}, 
-                                            colnum::Integer, 
-                                            tol::AbstractFloat)
+function checkIdenticalColumns(A::AbstractArray{T,2}, 
+                               colnum::Integer, 
+                               tol::AbstractFloat) where T <: Number
 # TODO: @doc this
 # checks which columns are identical to column number col
 # returns number of column identical and an array of bools telling which ones
@@ -666,7 +666,7 @@ function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2},
   (m,n) = size(A)
   cnt = 0
   
-  col = view(A, :, colnum)
+  col = sview(A, :, colnum)
   is_same = zeros(Bool, n)
   
   for i=1:n  # loop over columns
@@ -674,7 +674,7 @@ function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2},
     if i == colnum  # skip the specified column
       continue
     end
-    col_i = view(A, :, i)
+    col_i = sview(A, :, i)
     diff_norm = norm(col - col_i)/m
   
     if diff_norm < tol
@@ -688,7 +688,7 @@ function checkIdenticalColumns{T <: Number}(A::AbstractArray{T,2},
 end     # end checkIdenticalColumns
 
 
-function findLarge{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
+function findLarge(A::AbstractArray{T,2}, tol::AbstractFloat) where T <: Number
 # TODO: @doc this
 
   (m,n) = size(A)
@@ -707,9 +707,9 @@ function findLarge{T <: Number}(A::AbstractArray{T,2}, tol::AbstractFloat)
 end     # end findLarge
 
 
-function checkSparseColumns{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, 
-                            sparsity_bnds::AbstractArray{T2, 2}, 
-                            tol::AbstractFloat)
+function checkSparseColumns(A::AbstractArray{T,2}, 
+sparsity_bnds::AbstractArray{T2, 2}, 
+tol::AbstractFloat) where {T <: Number, T2 <: Integer}
 # TODO: @doc this
 # checks that all entries outside the range specified by sparsity_bnds
 # are zero
@@ -750,9 +750,9 @@ function checkSparseColumns{T <: Number, T2 <: Integer}(A::AbstractArray{T,2},
 end     # end of checkSparseColumns function
 
 
-function checkSparseRows{T <: Number, T2 <: Integer}(A::AbstractArray{T,2}, 
-                         sparsity_bnds::AbstractArray{T2, 2},  
-                         tol::AbstractFloat)
+function checkSparseRows(A::AbstractArray{T,2}, 
+sparsity_bnds::AbstractArray{T2, 2},  
+tol::AbstractFloat) where {T <: Number, T2 <: Integer}
 # checks that all entries outside the range specified by sparsity_bnds
 # are zero
 # returns the number of rows with out of bounds entries and an array of
@@ -849,16 +849,16 @@ end
 export FIFOQueue, front
 import Base.push!, Base.pop!, Base.length, Base.isempty, 
        Base.resize!, Base.empty!
-type FIFOQueue{T}
+mutable struct FIFOQueue{T}
   s::Array{T, 1}  # array of values
   tail::Int  # current tail of que (points to most recently inserted elements)
   head::Int  # points to least recently inserted elements (next to pop)
   fac::Float64  # factor by which to expand que when it runs out of space
 
-  function FIFOQueue(; size_hint=1, fac=1.4)
+  function FIFOQueue{T}(; size_hint=1, fac=1.4) where T
     # size_hint = initial size of array
     size_hint = max(size_hint, 1)
-    arr = Array(T, size_hint)
+    arr = Array{T}(size_hint)
     tail = 0
     head = 1
    return new(arr, tail, head, fac)
@@ -866,7 +866,7 @@ type FIFOQueue{T}
 
 end
 
-function push!{T}(que::FIFOQueue{T}, val::T)
+function push!(que::FIFOQueue{T}, val::T) where T
   # check size
   len = length(que.s)
   if (que.tail + 1) > len
@@ -881,7 +881,7 @@ function push!{T}(que::FIFOQueue{T}, val::T)
   return nothing
 end
 
-function pop!{T}(que::FIFOQueue{T})
+function pop!(que::FIFOQueue{T}) where T
   # add check that head >= tail ?
   pos = que.head
   val = que.s[pos]
@@ -890,7 +890,7 @@ function pop!{T}(que::FIFOQueue{T})
   return val
 end
 
-function pop!{T}(que::FIFOQueue{T}, vals::AbstractArray{T, 1})
+function pop!(que::FIFOQueue{T}, vals::AbstractArray{T, 1}) where T
 # remove last n elements, where n = length(vals)
 
   n = length(vals)
@@ -902,7 +902,7 @@ function pop!{T}(que::FIFOQueue{T}, vals::AbstractArray{T, 1})
 end
 
 # function front retrieve element without removing
-function front{T}(que::FIFOQueue{T})
+function front(que::FIFOQueue{T}) where T
   return que.s[que.head]
 end
 
@@ -961,7 +961,7 @@ end
 
 function getBranchName(dir=pwd())
 # get the name of the current branch of the git repo in the specified directory
-  nm = readall(`git rev-parse --abbrev-ref HEAD`)
+  nm = readstring(`git rev-parse --abbrev-ref HEAD`)
   return nm[1:end-1]  # remove newline
 
 return end
@@ -995,7 +995,7 @@ function isFieldDefined(obj, req_fieldnames...)
   obj_type = typeof(obj)
   alldefined = true
   for i=1:length(req_fieldnames)
-    fname_i = symbol(req_fieldnames[i])  # convert to symbol if possible
+    fname_i = Symbol(req_fieldnames[i])  # convert to symbol if possible
 
     if !(fname_i in fnames)
       throw(ErrorException("fieldname $fname_i is not a field of $obj_type"))
@@ -1024,7 +1024,7 @@ end
   Outputs:
     fname_stub: new file name, including extension
 """
-function get_parallel_fname(fname::ASCIIString, comm_rank)
+function get_parallel_fname(fname::String, comm_rank)
 
   # figure out where file extension starts
   len = length(fname)
@@ -1073,7 +1073,7 @@ function split_fname(fname::AbstractString)
   end
 
   if sep_loc == 0  # no extension
-    fstem = copy(fname)
+    fstem = identity(fname)
     fext = ""
   else
     fstem = fname[1:(sep_loc-1)]
@@ -1085,11 +1085,11 @@ function split_fname(fname::AbstractString)
 end
 
 """
-  Wrapper around joinpath() that always returns an ASCIIString.
+  Wrapper around joinpath() that always returns an String.
 """
-function joinpath_ascii(str::ASCIIString...)
+function joinpath_ascii(str::String...)
 
-  return ASCIIString(joinpath(str...))
+  return ascii(joinpath(str...))
 end
 
 """

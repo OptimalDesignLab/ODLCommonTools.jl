@@ -17,7 +17,7 @@
     built on top of this should not need to know the file format, hence only
     this function will need to be modified (and the associated reader function)
 """
-function write_binary{T}(fname::AbstractString, arr::ContiguousArrays{T})
+function write_binary(fname::AbstractString, arr::ContiguousArrays{T}) where T
 
   if !isbits(T)
     throw(ErrorException("cannot write array of non-isbits elements to binary file"))
@@ -51,7 +51,7 @@ end
     even if the datatype is different.
 
 """
-function read_binary!{T}(fname::AbstractString, arr::ContiguousArrays{T})
+function read_binary!(fname::AbstractString, arr::ContiguousArrays{T}) where T
 
   if !isbits(T)
     throw(ErrorException("cannot read array of non-isbits elements to binary file"))
