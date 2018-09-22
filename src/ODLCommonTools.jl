@@ -20,7 +20,7 @@ export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
 export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
-       FunctionalType
+       FluxType_revq, FunctionalType
 export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
