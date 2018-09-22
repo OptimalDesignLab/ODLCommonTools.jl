@@ -314,14 +314,13 @@ abstract type BCType_revm end # functor for reverse mode of boundary conditions 
 abstract type SRCType end # functor source term abstract type
 
 """
-  Abstract supertype of all numerical flux functions used by standard DG face
-  integrals
+  Abstract supertype of all 2 point numerical flux functions.
 """
 abstract type FluxType end # functor DG flux abstract type
 
 """
-  Abstract supertype of all numerical flux functions used by standard DG
-  face integral that compute the reverse mode with respect to the metrics
+  Like [`Fluxtype`](@ref) but for functors that compute the reverse mode
+  with respect to the metrics.
 """
 abstract type FluxType_revm end # functor type for reverse mode of DG interface fluxes w.r.t mesh metrics
 
@@ -331,6 +330,12 @@ abstract type FluxType_revm end # functor type for reverse mode of DG interface 
   jacobian of the flux with respect to the left and right solutions.
 """
 abstract type FluxType_diff end
+
+"""
+  Like [`FluxType`](@ref) but for functors that compute the reverse mode
+  with respect to the solution q
+"""
+abstract type FluxType_revq end
 
 abstract type FunctionalType end # functor for functional abstract type
 
@@ -417,7 +422,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.aview
 else
