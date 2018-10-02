@@ -6,6 +6,7 @@ __precompile__(true)
 module ODLCommonTools
 using ArrayViews
 import ArrayViews.view  # use ArrayViews rather than Base.view
+import Base.==
 
 include("topo.jl")
 
@@ -301,6 +302,24 @@ end
   Abstract supertype of all boundary condition functors
 """
 abstract type BCType end  # functor boundary condition abstract type
+
+
+"""
+  Equality test for two BCTypes of the same type.  Tests that all fields
+  are equal
+"""
+function (==)(x::T, y::T) where {T <: BCType}
+
+  fnames = fieldnames(T)
+  val = true
+  for fname in fnames
+    val = val && (getfield(x, fname) == getfield(y, fname))
+  end
+
+  return val
+end
+
+
 
 """
   Abstract supertype of all boundary condition functors that compute the
