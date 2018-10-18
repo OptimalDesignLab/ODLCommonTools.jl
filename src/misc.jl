@@ -6,6 +6,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, smallmatTmat!, smallmatTmat,
         smallmatvec_revv!,
+        smallmatmat_kernel!, smallmatmatT_kernel!, smallmatTmat_kernel!,
         checkZeroRows, 
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
@@ -285,6 +286,10 @@ end
   Performs a matrix-matrix multiply.  Uses a special algorithm for small
   matrices, otherwise calls BLAS (when possible).
 
+  Julia's `A_mul_B` does not support the alpha and beta arguments of BLAS, so
+  its somewhat difficult to make that the interface for `smallmatmat`.
+  Use `smallmatmat_kernel` instead
+
   **Inputs**
 
    * A: first matrix
@@ -308,6 +313,7 @@ function smallmatmat!(A::AbstractArray{T, 2},
 
   return b
 end
+
 
 # don't call BLAS when reinterpret isn't supported
 
@@ -358,7 +364,8 @@ end
  
 function smallmatmat_kernel!(A::AbstractArray{T, 2}, 
                       x::AbstractArray{T2, 2}, 
-                      b::AbstractArray{T3, 2}) where {T, T2, T3}
+                      b::AbstractArray{T3, 2},
+                      alpha::Number=1, beta::Number=0) where {T, T2, T3}
 # TODO: this comment needs to be a @doc
 # multiplies matrix A by matrix x, writing the solution to matrix b
 # both dimensions of A and the final dimension of x are used for looping
@@ -379,12 +386,14 @@ function smallmatmat_kernel!(A::AbstractArray{T, 2},
     for k=1:p  # loop over the column vectors of x
       # overwrite b, first column only
       @simd for i=1:m
-        b[i, k] = x[1, k]*A[i, 1]
+        b[i, k] = beta*b[i, k]
+        #b[i, k] = x[1, k]*A[i, 1]
       end
 
-      for i=2:n  # loop across columns
+      for i=1:n  # loop across columns
+        xval = alpha*x[i, k]
         @simd for j=1:m  # loop down columns
-          b[j, k] += A[j,i]*x[i, k]
+          b[j, k] += A[j,i]*xval
         end
       end
     end
@@ -400,7 +409,7 @@ function smallmatmat(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, T
   (m,n) = size(A)
   (xn, p) = size(x)
   T3 = promote_type(T, T2)
-  b = Array{T3}( m, p)
+  b = zeros(T3, m, p)
   smallmatmat!(A, x, b)
 end
 
@@ -483,7 +492,8 @@ end
  
 function smallmatmatT_kernel!(A::AbstractArray{T, 2},
                        x::AbstractArray{T2, 2},
-                       b::AbstractArray{T3, 2}) where {T, T2, T3}
+                       b::AbstractArray{T3, 2},
+                       alpha::Number=1, beta::Number=0) where {T, T2, T3}
 # TODO: this comment needs to be a @doc
 # multiplies A by x.', storing result in b
 
@@ -497,17 +507,16 @@ function smallmatmatT_kernel!(A::AbstractArray{T, 2},
 
   @inbounds begin
     # overwrite b
-    for i=1:m
-      a_i = A[i, 1]
-      @simd for j=1:p
-        b[i,j] = a_i*x[j,1]
+    for i=1:p
+      @simd for j=1:m
+        b[j, i] = beta*b[j, i]
       end
     end
 
     # add to b
-    for j=2:n  # loop across remaining columns of A
+    for j=1:n  # loop across remaining columns of A
       for i=1:m  # loop down a column
-        a_i = A[i, j]
+        a_i = alpha*A[i, j]
         # multiply this entry by row i of x.'
         @simd for k=1:p
           b[i,k] += a_i*x[k, j]
@@ -526,7 +535,7 @@ function smallmatmatT(A::AbstractArray{T,2}, x::AbstractArray{T2, 2}) where {T, 
   (m,n) = size(A)
   (p, xn) = size(x)
   T3 = promote_type(T, T2)
-  b = Array{T3}( n, p)
+  b = zeros(T3, m, p)
   smallmatmatT!(A, x, b)
 end
 
@@ -566,7 +575,8 @@ end
 
 #TODO: performance test
 function smallmatTmat_kernel!(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
-                       b::AbstractMatrix{T3}) where {T, T2, T3}
+                       b::AbstractMatrix{T3},
+                       alpha::Number=1, beta::Number=0) where {T, T2, T3}
 
   n, m = size(A)
   xn, p = size(x)
@@ -577,13 +587,17 @@ function smallmatTmat_kernel!(A::AbstractMatrix{T}, x::AbstractMatrix{T2},
   @assert p == bn
 
   # overwrite b
-  fill!(b, 0)
+  @inbounds @simd for i=1:p
+    @simd for j=1:m
+      b[j, i] = beta*b[j, i]
+    end
+  end
 
-  @inbounds for i=1:p  # columns of x
-    for j=1:m  # columns of A
+  @inbounds @simd for i=1:p  # columns of x
+    @simd for j=1:m  # columns of A
       # zero b here?
       @simd for k=1:n
-        b[j, i] += A[k, j]*x[k, i]
+        b[j, i] += alpha*A[k, j]*x[k, i]
       end
     end
   end

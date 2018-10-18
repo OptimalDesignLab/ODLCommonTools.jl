@@ -3,7 +3,11 @@
 # only work for arrays (needs to be subtype of DenseArray in order 
 # to call BLAS functions
 
+import ArrayViews: aview, unsafe_aview, Subs
+
 ContiguousArrays{T, N} =   Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
+
+const AllArrayViews = Union{ArrayView, UnsafeArrayView}
 
 """
   A read only wrapper type for AbstractArrays. getindex is defined for
@@ -47,7 +51,28 @@ unsafe_convert(::Type{Ptr{T}}, A::ROView) where {T} = pointer(A)
 """
 @inline ro_sview(A::Array, idx...) = ROView(sview(A, idx...))
 @inline ro_sview(A::ROView, idx...) = ROView(sview(parent(A), idx...))
-@inline ro_sview(A::ArrayView, idx...) = ROView(sview(A, idx...))
+@inline ro_sview(A::AllArrayViews, idx...) = ROView(sview(A, idx...))
+
+# enable taking a sview of a ro_sview
+# this must return an ro_sview to preserve the read-only property
+# up to 5 argument constructors have to be listed explicitly to avoid ambiguity
+# problem with Arrayviews (a varargs is less specific than a positional argument
+# and ROView us a subtype of DenseArray
+
+@inline aview(A::ROView, i1::Subs) = ROView(aview(parent(A), i1))
+@inline aview(A::ROView, i1::Subs, i2::Subs) = ROView(aview(parent(A), i1, i2))
+@inline aview(A::ROView, i1::Subs, i2::Subs, i3::Subs) = ROView(aview(parent(A), i1, i2, i3))
+@inline aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs) = ROView(aview(parent(A), i1, i2, i3, i4))
+@inline aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs, i5::Subs) = ROView(aview(parent(A), i1, i2, i3, i4, i5))
+@inline aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs, i5::Subs, I::Subs...) = ROView(aview(parent(A), i1, i2, i3, i4, i5, I...))
+
+
+@inline unsafe_aview(A::ROView, i1::Subs) = ROView(unsafe_aview(parent(A), i1))
+@inline unsafe_aview(A::ROView, i1::Subs, i2::Subs) = ROView(unsafe_aview(parent(A), i1, i2))
+@inline unsafe_aview(A::ROView, i1::Subs, i2::Subs, i3::Subs) = ROView(unsafe_aview(parent(A), i1, i2, i3))
+@inline unsafe_aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs) = ROView(unsafe_aview(parent(A), i1, i2, i3, i4))
+@inline unsafe_aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs, i5::Subs) = ROView(unsafe_aview(parent(A), i1, i2, i3, i4, i5))
+@inline unsafe_aview(A::ROView, i1::Subs, i2::Subs, i3::Subs, i4::Subs, i5::Subs, I::Subs...) = ROView(unsafe_aview(parent(A), i1, i2, i3, i4, i5, I...))
 
 # useful aliases
 ROVector{T, P} =  ROView{T, 1, P}

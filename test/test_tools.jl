@@ -19,6 +19,12 @@
   end
 
 
+function normLinf(A::AbstractArray)
+
+  return maximum(abs.(A))
+end
+
+
 @testset "--- Testing misc.jl ---" begin
 
   # test mat-vec
@@ -77,9 +83,9 @@
     b[j] = 0
   end
 
-  @test isapprox( norm(jac - jac2), 0.0) atol=1e-13
+  @test isapprox( normLinf(jac - jac2), 0.0) atol=1e-13
 
-  # test reinterper-BLAS interaction
+  # test reinterpert-BLAS interaction
 
   println("testing BLAS fallbacks")
   for d=2:20  # size of arrays
@@ -99,7 +105,7 @@
 
     b2 = A[:, :, 1]*x[:, 1]
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     # test safe view
     Av2 = aview(A, :, :, 1)
@@ -108,44 +114,44 @@
 
     smallmatvec!(Av2, xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     # check mixed argument types
     b3 = zeros(b2)
     smallmatvec!(Av2, xv2, b3)
 
-    @test isapprox( norm(b3 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(b3 - b2), 0.0) atol=1e-14
 
     smallmatvec!(A[:, :, 1], xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     smallmatvec!(ROView(Av), xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatvec!(ROView(Av2), xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatvec!(ROView(Av2), ROView(xv), bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatvec!(ROView(Av2), xv, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     # test transposed mat-vec
     b2 = A[:, :, 1].'*x[:, 1]
 
     smallmatTvec!(Av, xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatTvec!(Av2, xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
   end
 
@@ -167,7 +173,7 @@
 
     smallmatmat!(Av, xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     # test safe aview
     Av2 = aview(A, :, :, 1)
@@ -176,116 +182,149 @@
 
     smallmatmat!(Av2, xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     b3 = zeros(b2)
 
     smallmatmat!(Av2, xv2, b3)
 
-    @test isapprox( norm(b3 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(b3 - b2), 0.0) atol=1e-14
 
     smallmatmat!(A[:, :, 1], xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     smallmatmat!(ROView(Av2), xv, bv)
 
-    @test isapprox( norm(bv - bv2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - bv2), 0.0) atol=1e-14
 
     smallmatmat!(ROView(Av2), xv, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
+
+
 
     # test mat-matT
     b2 = A[:, :, 1]*x[:, :, 1].'
     smallmatmatT!(Av, xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatmatT!(Av2, xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     smallmatmatT!(A[:, :, 1], xv2, bv2)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     b3 = zeros(b2)
     smallmatmatT!(Av2, xv2, b3)
 
-    @test isapprox( norm(b3 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(b3 - b2), 0.0) atol=1e-14
 
     smallmatmatT!(ROView(Av2), xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatmatT!(ROView(Av2), xv, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
     # test matT-mat
     b2 = A[:, :, 1].'*x[:, :, 1]
 
     smallmatTmat!(Av, xv, bv)
 
-    @test isapprox( norm(bv - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv - b2), 0.0) atol=1e-14
 
     smallmatTmat!(Av2, xv2, bv2)
 
-    @test isapprox( norm(bv2 - b2), 0.0) atol=1e-14
+    @test isapprox( normLinf(bv2 - b2), 0.0) atol=1e-14
 
   end
 
+  # A is d1 x d2, x = d2 x d3, b = d1 x d3
+  for d1=2:20
+    for d2=2:20
+      for d3=2:20
 
-  A = rand(4, 4)
-  x = rand(4, 2)
-  b = A*x
-  b2 = rand(4, 2)
-  smallmatmat!(A, x, b2)
-  b3 = smallmatmat(A, x)
+        # mat-mat
+        A = rand(d1, d2)
+        x = rand(d2, d3)
+        b = A*x
+        b2 = rand(d1, d3)
+        smallmatmat!(A, x, b2)
+        b3 = smallmatmat(A, x)
+        b4 = rand(d1, d3)
+        b5 = 2*A*x + 3*b4
+        smallmatmat_kernel!(A, x, b4, 2, 3)
 
-  @test isapprox( b, b2) atol=1e-14
-  @test isapprox( b, b3) atol=1e-14
+        @test normLinf(b - b2) < 1e-13
+        @test normLinf(b - b3) < 1e-13
+        @test normLinf(b4 - b5) < 1e-13
 
-  A = rand(4, 3)
-  x = rand(3, 2)
-  b = A*x
-  b2 = rand(4, 2)
-  smallmatmat!(A, x, b2)
-  b3 = smallmatmat(A, x)
-  @test isapprox( b, b2) atol=1e-14
-  @test isapprox( b, b3) atol=1e-14
+        # mat-matT
+        A = rand(d1, d2)
+        x = rand(d3, d2)
+        b = A*(x.')
+        b2 = rand(d1, d3)
+        smallmatmatT!(A, x, b2)
+        b3 = smallmatmatT(A, x)
+        b4 = rand(d1, d3)
+        b5 = 2*A*(x.') + 3*b4
+        smallmatmatT_kernel!(A, x, b4, 2, 3)
 
-  A = rand(3,3)
-  x = rand(3,3)
-  b = zeros(3,3)
+        @test normLinf(b - b2) < 1e-13
+        @test normLinf(b - b3) < 1e-13
+        @test normLinf(b4 - b5) < 1e-13
 
-  b2 = A*(x.') 
-  smallmatmatT!(A, x, b)
+        # matT-mat
+        A = rand(d2, d1)
+        x = rand(d2, d3)
+        b = A.'*x
+        b2 = rand(d1, d3)
+        smallmatTmat!(A, x, b2)
+        b3 = smallmatTmat(A, x)
+        b4 = rand(d1, d3)
+        b5 = 2*A.'*x + 3*b4
+        smallmatTmat_kernel!(A, x, b4, 2, 3)
 
-  @test isapprox( b, b2) atol=1e-14
+        @test normLinf(b - b2) < 1e-13
+        @test normLinf(b - b3) < 1e-13
+        @test normLinf(b4 - b5) < 1e-13
+      end
+    end
+  end
 
-  A = rand(7,7)
-  x = rand(4, 7)
-  b = zeros(7, 4)
-  b2 = A*(x.')
-  smallmatmatT!(A, x, b)
-  b3 = smallmatmatT(A, x)
-  @test isapprox( b, b2) atol=1e-14
-  @test isapprox( b, b3) atol=1e-14
+  # A = d1 x d2, x = d2, b = d1
+  for d1=1:20
+    for d2=1:20
 
-  # test smallmatTvec
-  A = rand(3,3)
-  x = rand(3)
-  b = smallmatTvec(A, x)
-  b2 = A.'*x
-  @test isapprox( b, b2) atol=1e-14
+      # mat-vec
+      A = rand(d1, d2)
+      x = rand(d2)
+      b = A*x
+      b2 = rand(d1)
+      smallmatvec!(A, x, b2)
+      b3 = smallmatvec(A, x)
 
-  A = rand(4, 3)
-  x = rand(4)
-  b2 = A.'*x
-  b = smallmatTvec(A, x)
-  @test isapprox( b, b2) atol=1e-14
+      @test normLinf(b - b2) < 1e-13
+      @test normLinf(b - b3) < 1e-13
+
+      # matT-vec
+      A = rand(d2, d1)
+      x = rand(d2)
+      b = A.'*x
+      b2 = rand(d1)
+      smallmatTvec!(A, x, b2)
+      b3 = smallmatTvec(A, x)
+
+      @test normLinf(b - b2) < 1e-13
+      @test normLinf(b - b3) < 1e-13
+    end
+  end
+
 
   branch_name = getBranchName()
   @test  length(branch_name)  > 0
@@ -306,19 +345,6 @@
   @test ( numz )== 0
   @test ( arr )== [false, false, false]
 
-
-  # test smallmatTmat
-  A = [1. 2 3; 4 5 6; 7 8 9]
-  x = 2*A
-  b = smallmatTmat(A, x)
-  b2 = A.'*x
-  @test isapprox( b, b2) atol=1e-13
-
-  A = rand(4, 3)
-  x = rand(4, 5)
-  b = smallmatTmat(A, x)
-  b2 = A.'*x
-  @test isapprox( b, b2) atol=1e-13
 
   q = FIFOQueue{Int}()
 
