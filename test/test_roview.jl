@@ -26,6 +26,7 @@ end
 @testset "----- Testing ROView -----" begin
 
   a = rand(100, 1000)
+  a2 = rand(100, 1000, 1)
 
   b = ROView(a)
   @test ( size(b) )== size(a)
@@ -33,16 +34,21 @@ end
 
   @test isapprox( norm(a - b), 0.0) 
 
-  # check that allocating a ROView does not allocate 
-  if !ODLCommonTools.safe_views
-    @time sum_cols(a)
-    bytes_alloc = @allocated sum_cols(a)
-
-    @test  bytes_alloc  < 100
-  end
-
-  # check that indexing a ROView does not allocate
   if Base.JLOptions().can_inline == true
+    # check that allocating a ROView does not allocate 
+    if !ODLCommonTools.safe_views
+      @time sum_cols(a)
+      bytes_alloc = @allocated sum_cols(a)
+      @test  bytes_alloc  < 100
+
+      # test ROView of sview
+      atmp = sview(a2, :, :, 1)
+      @time sum_cols(atmp)
+      bytes_alloc = @allocated sum_cols(atmp)
+      @test  bytes_alloc  < 100
+    end
+
+    # check that indexing a ROView does not allocate
     sumit(b)
     bytes_alloc = @allocated sumit(b)
     @test  bytes_alloc  < 100
@@ -59,6 +65,8 @@ end
 
 
   # test that composition works
+
+  # ro_sview of an sview
   arr = rand(2, 3, 4)
   v1 = sview(arr, :, :, 1)
   v2 = sview(v1, :, 1)
@@ -66,6 +74,17 @@ end
   for i=1:length(v2)
     @test v2[i] == v3[i]
   end
+
+  # test sview of ro_sview
+  v1 = ro_sview(arr, :, :, 1)
+  v2 = sview(v1, :, 1)
+  v3 = arr[:, 1, 1]
+
+  for i=1:length(v2)
+    @test v2[i] == v3[i]
+  end
+
+
 
 end
 
