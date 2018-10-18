@@ -57,5 +57,15 @@ end
   @test ( Av2[1] )== Complex128(Av[1], Av[2])
   @test ( Av2[2] )== Complex128(Av[3], Av[4])
 
+
+  # test that composition works
+  arr = rand(2, 3, 4)
+  v1 = sview(arr, :, :, 1)
+  v2 = sview(v1, :, 1)
+  v3 = ro_sview(v1, :, 1)
+  for i=1:length(v2)
+    @test v2[i] == v3[i]
+  end
+
 end
 

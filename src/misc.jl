@@ -391,8 +391,9 @@ function smallmatmat_kernel!(A::AbstractArray{T, 2},
       end
 
       for i=1:n  # loop across columns
+        xval = alpha*x[i, k]
         @simd for j=1:m  # loop down columns
-          b[j, k] += alpha*A[j,i]*x[i, k]
+          b[j, k] += A[j,i]*xval
         end
       end
     end
@@ -515,10 +516,10 @@ function smallmatmatT_kernel!(A::AbstractArray{T, 2},
     # add to b
     for j=1:n  # loop across remaining columns of A
       for i=1:m  # loop down a column
-        a_i = A[i, j]
+        a_i = alpha*A[i, j]
         # multiply this entry by row i of x.'
         @simd for k=1:p
-          b[i,k] += alpha*a_i*x[k, j]
+          b[i,k] += a_i*x[k, j]
         end
       end
     end      

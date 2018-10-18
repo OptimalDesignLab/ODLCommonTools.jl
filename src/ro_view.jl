@@ -5,6 +5,8 @@
 
 ContiguousArrays{T, N} =   Union{Array{T, N}, ContiguousView{T, N}, UnsafeContiguousView{T, N}}
 
+const AllArrayViews = Union{ArrayView, UnsafeArrayView}
+
 """
   A read only wrapper type for AbstractArrays. getindex is defined for
   this function but setindex! is not.
@@ -47,7 +49,7 @@ unsafe_convert(::Type{Ptr{T}}, A::ROView) where {T} = pointer(A)
 """
 @inline ro_sview(A::Array, idx...) = ROView(sview(A, idx...))
 @inline ro_sview(A::ROView, idx...) = ROView(sview(parent(A), idx...))
-@inline ro_sview(A::ArrayView, idx...) = ROView(sview(A, idx...))
+@inline ro_sview(A::AllArrayViews, idx...) = ROView(sview(A, idx...))
 
 # useful aliases
 ROVector{T, P} =  ROView{T, 1, P}
