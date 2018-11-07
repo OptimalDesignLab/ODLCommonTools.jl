@@ -20,8 +20,8 @@ export Boundary, Interface, getElementL, getFaceL, NullBoundary, NullInterface
 export AbstractFunctional, AbstractIntegralFunctional
 export Boundary
 export Interface
-export BCType, BCType_revm, SRCType, FluxType, FluxType_revm, FluxType_diff,
-       FluxType_revq, FunctionalType
+export BCType, BCType_revm, BCType_revq, SRCType, FluxType, FluxType_revm,
+       FluxType_diff, FluxType_revq, FunctionalType
 export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
@@ -301,7 +301,7 @@ end
 """
   Abstract supertype of all boundary condition functors
 """
-abstract type BCType end  # functor boundary condition abstract type
+abstract type BCType end
 
 
 """
@@ -325,12 +325,20 @@ end
   Abstract supertype of all boundary condition functors that compute the
   reverse mode with respect to the metrics
 """
-abstract type BCType_revm end # functor for reverse mode of boundary conditions w.r.t mesh metrics
+abstract type BCType_revm end
+
+
+"""
+  Abstract supertype of all boundary condition functors that compute the
+  reverse mode with respect to the solution
+"""
+abstract type BCType_revq end
+
 
 """
   Abstract supertype of all source term functors
 """
-abstract type SRCType end # functor source term abstract type
+abstract type SRCType end
 
 """
   Abstract supertype of all 2 point numerical flux functions.
@@ -441,7 +449,7 @@ end
   This bool value controls whether the function named sview refers to 
   view or unsafe_view from the ArrayViews package
 """->
-global const safe_views = true
+global const safe_views = false
 if safe_views
   global const sview = ArrayViews.aview
 else
