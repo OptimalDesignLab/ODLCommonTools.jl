@@ -297,6 +297,7 @@ end
     end
   end
 
+  # test mat-vec
   # A = d1 x d2, x = d2, b = d1
   for d1=1:20
     for d2=1:20
@@ -308,9 +309,15 @@ end
       b2 = rand(d1)
       smallmatvec!(A, x, b2)
       b3 = smallmatvec(A, x)
+      b4 = rand(d1)
+      b5 = 2*A*x + 3*b4
+      smallmatvec_kernel!(A, x, b4, 2, 3)
+
 
       @test normLinf(b - b2) < 1e-13
       @test normLinf(b - b3) < 1e-13
+      @test normLinf(b4 - b5) < 1e-13
+
 
       # matT-vec
       A = rand(d2, d1)
@@ -319,9 +326,13 @@ end
       b2 = rand(d1)
       smallmatTvec!(A, x, b2)
       b3 = smallmatTvec(A, x)
+      b4 = rand(d1)
+      b5 = 2*A.'*x + 3*b4
+      smallmatTvec_kernel!(A, x, b4, 2, 3)
 
       @test normLinf(b - b2) < 1e-13
       @test normLinf(b - b3) < 1e-13
+      @test normLinf(b4 - b5) < 1e-13
     end
   end
 

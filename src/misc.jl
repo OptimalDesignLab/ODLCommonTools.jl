@@ -3,6 +3,7 @@
 using ArrayViews
 
 export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!, 
+        smallmatvec_kernel!, smallmatTvec_kernel!,
         smallmatTvec, smallmatmat!, 
         smallmatmat, smallmatmatT!, smallmatmatT, smallmatTmat!, smallmatTmat,
         smallmatvec_revv!,
@@ -137,17 +138,23 @@ end
 
 
 
+"""
+  Performs b = alpha*A*x + beta*b.  This works well for small matrices
 
+  **Inputs**
+
+   * A: matrix
+   * x: vector
+   * alpha: scalar
+   * beta: scalar
+
+  **Inputs/Outputs**
+
+   * b: vector 
+"""
 function smallmatvec_kernel!(A::AbstractArray{T,2}, 
-           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1}) where {T, T2, T3}
-# TODO: this comment needs to be a @doc
-# performs matrix vector multiplication for small matrices
-# b gets overwritten
-# multiplication is expressed as linear combination of columns of A
-# optimized for column major format
-# does that matter if all operands fit in cache?
-# faster than Julia's built-in matvec for for square matrices
-# of size 128 or less
+           x::AbstractArray{T2,1}, b::AbstractArray{T3, 1},
+           alpha::Number=1, beta::Number=0) where {T, T2, T3}
   (m,n) = size(A)
   xm = length(x)
   bm = length(b)
@@ -158,12 +165,13 @@ function smallmatvec_kernel!(A::AbstractArray{T,2},
   # overwrite b, first column only
   @inbounds begin
     @simd for i=1:m
-      b[i] = x[1]*A[i, 1]
+      b[i] = beta*b[i]
     end
 
-    for i=2:n  # loop across columns
+    @simd for i=1:n  # loop across columns
+       ax_i = alpha*x[i]
       @simd for j=1:m  # loop down columns
-        b[j] += A[j,i]*x[i]
+        b[j] += A[j,i]*ax_i
       end
     end
 
@@ -244,8 +252,11 @@ function smallmatTvec!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
 end
 
 
-# do A.'*x = b
-function smallmatTvec_kernel!(A::AbstractMatrix, x::AbstractVector, b::AbstractVector)
+"""
+  Performs b = alpha*A*x + beta*b.  Works well for small matrices
+"""
+function smallmatTvec_kernel!(A::AbstractMatrix, x::AbstractVector,
+                              b::AbstractVector, alpha::Number=1, beta::Number=0)
   (m,n) = size(A)
   xm = length(x)
   bm = length(b)
@@ -257,11 +268,11 @@ function smallmatTvec_kernel!(A::AbstractMatrix, x::AbstractVector, b::AbstractV
     for i=1:n  # loop over columns of A
       # perform action for each column of A
       # over write each entry
-      b[i] = A[1, i]*x[1]
+      b[i] = alpha*A[1, i]*x[1] + beta*b[i]
 
       # accumulate over rest of column
       @simd for j=2:m
-        b[i] += A[j, i]*x[j]
+        b[i] += alpha*A[j, i]*x[j]
       end
     end
 
