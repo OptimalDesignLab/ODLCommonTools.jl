@@ -17,7 +17,10 @@ import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
 export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
 export Boundary, Interface, getElementL, getFaceL, NullBoundary, NullInterface
-export AbstractFunctional, AbstractIntegralFunctional
+export AbstractFunctional, AbstractIntegralFunctional,
+       AbstractBoundaryFunctional, setupFunctional, getParallelData,
+       getParallelDataString, getParallelDataEnum,
+       PARALLEL_DATA_NONE, PARALLEL_DATA_FACE, PARALLEL_DATA_ELEMENT
 export Boundary
 export Interface
 export BCType, BCType_revm, BCType_revq, SRCType, FluxType, FluxType_revm,
@@ -134,32 +137,6 @@ the data needed for parallel communication
 """
 abstract type AbstractSharedFaceData{Tsol} end
 
-@doc """
-### ODLCommonTools.AbstractFunctional
-
-Abstract datatype for optimization related data structures. All data types
-corresponding to optimization problems should be a subtype of this.
-
-  **Static Parameters**
-
-   * Topt
-
-"""->
-abstract type AbstractFunctional{Topt} end
-
-
-"""
-  Abstract type for integral objective functions.  Any integral objective
-  function should be a subtype of this, which is a subtype ofi
-  [`AbstractFunctional`](@ref).
-
-  **Static Parameters**
-
-   * Topt
-
-
-"""
-abstract type AbstractIntegralFunctional{Topt} <: AbstractFunctional{Topt} end
 
 """
 
@@ -530,6 +507,7 @@ end
 
 
 include("types.jl")
+include("abstract_functional.jl")
 include("sparse.jl")
 include("eqn_deepcopy.jl")
 include("ro_view.jl")
