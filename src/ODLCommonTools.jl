@@ -15,11 +15,12 @@ import Base.isless
 import Base.copy
 import Base.copy!
 export AbstractSolutionData, AbstractParamType, Abstract3DArray, Abstract4DArray
-export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractSharedFaceData
+export AbstractMesh, AbstractCGMesh, AbstractDGMesh, AbstractOperator,
+       AbstractSharedFaceData
 export Boundary, Interface, getElementL, getFaceL, NullBoundary, NullInterface
 export AbstractFunctional, AbstractIntegralFunctional,
        AbstractBoundaryFunctional, setupFunctional, getParallelData,
-       getParallelDataString, getParallelDataEnum,
+       getParallelDataString, getParallelDataEnum, CompositeFunctional,
        PARALLEL_DATA_NONE, PARALLEL_DATA_FACE, PARALLEL_DATA_ELEMENT
 export Boundary
 export Interface
@@ -98,6 +99,11 @@ abstract type AbstractCGMesh{Tmsh} <: AbstractMesh{Tmsh} end
   The abstract type is the supertype of all discontinuous Galerkin meshes
 """->
 abstract type AbstractDGMesh{Tmsh} <: AbstractMesh{Tmsh} end
+
+"""
+  Abstract type for all discretization operators (SBP, FE, etc.)
+"""
+abstract type AbstractOperator{T} end
 
 """
   This abstract type is the supertype for all Param objects, which hold values 

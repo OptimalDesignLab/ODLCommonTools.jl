@@ -100,9 +100,21 @@ abstract type AbstractBoundaryFunctional{Topt} <: AbstractIntegralFunctional{Top
 # in more detail in PDESolver
 
 """
-  Evaluates a functional
-"""
+  Evaluates a functional.  This function always returns a value of type
+  `Topt`, the static parameter of the [`AbstractFunctional`](@ref) being
+  evaluated.  
+  """
 function evalFunctional
+end
+
+
+"""
+  Implementation of [`evalFunctional`](@ref). Each new functional
+  should implement this function, not `evalFunctional`.
+  The final positional argument of this function *must* be
+  the `AbstractFunctional` to be evaluated.
+"""
+function _evalFunctional
 end
 
 
@@ -115,10 +127,33 @@ end
 
 
 """
+  Implementation of [`evalFunctionalDeriv_m`](@ref).  Each new functional
+  should implement this function, not `evalFunctionalDeriv_m`
+  The final positional argument of this function *must* be
+  the `AbstractFunctional` to be evaluated.
+
+
+"""
+function _evalFunctionalDeriv_m
+end
+
+
+"""
   Computes the derivative of a functional with respect to the solution `q`.
   For efficiency, this should use reverse-mode differentiation internally.
 """
 function evalFunctionalDeriv_q
+end
+
+
+"""
+  Implementation of [`evalFunctionalDeriv_q`](@ref).  Each new functional
+  should implement this function, not `evalFunctionalDeriv_q`.
+  The final two positional argument of this function *must* be
+  the `AbstractFunctional` to be evaluated and the [`Abstract3DArray`](@ref)
+  to be overwritten with the solution
+"""
+function _evalFunctionalDeriv_q
 end
 
 
@@ -173,4 +208,100 @@ end
 function getParallelData(obj::AbstractBoundaryFunctional)
 
   return PARALLEL_DATA_NONE
+end
+
+
+#------------------------------------------------------------------------------
+# Composite Functional
+
+"""
+  Represents a functional that is the sum of other functionals.  All functional
+  must have the same parallel data requirement.
+
+  **Constructors**
+
+  ```
+  CompositeFunctional(func1, func2)
+  ```
+
+  where `func1` and `func2` are `AbstractFunctionals`](@ref), or
+
+  ```
+  CompositeFunctional([func1, func2])
+  ```
+"""
+struct CompositeFunctional{Topt} <: AbstractFunctional{Topt}
+  funcs::Vector{AbstractFunctional{Topt}}
+
+  function CompositeFunctional{Topt}(funcs::AbstractVector) where {Topt}
+    pdata = getParallelData(funcs[1])
+    for i=2:length(funcs)
+      @assert getParallelData(funcs[i]) == pdata
+    end
+
+    return new(funcs)
+  end
+end
+
+
+function CompositeFunctional(funcs::Vararg{AbstractFunctional{Topt}}) where {Topt}
+
+  return CompositeFunctional{Topt}(collect(funcs))
+end
+
+
+function CompositeFunctional(funcs::AbstractVector{AbstractFunctional{Topt}}) where {Topt}
+
+  return CompositeFunctional{Topt}(funcs)
+end
+
+function getParallelData(func::CompositeFunctional)
+  return getParallelData(func.funcs[1])
+end
+
+# In an ideal world, these would use varags to be fully generic, but
+# Julia only allows varags on the final argument, so we have to specify the
+# exact signature
+#function _evalFunctional(args..., func::CompositeFunctional{Topt}; kwargs...)::Topt where {Topt}
+function _evalFunctional(mesh::AbstractMesh{Tmsh},
+                         sbp::AbstractOperator, eqn::AbstractSolutionData{Tsol}, opts,
+                         func::CompositeFunctional{Topt})::Topt where {Tmsh, Tsol, Topt}
+
+  J = 0
+  for f in func.funcs
+    J += _evalFunctional(mesh, sbp, eqn, opts, f)
+  end
+
+  return J
+end
+
+
+function _evalFunctionalDeriv_m(mesh::AbstractDGMesh{Tmsh},
+                         sbp::AbstractOperator, eqn::AbstractSolutionData{Tsol}, opts,
+                         func::CompositeFunctional{Topt}) where {Tmsh, Tsol, Topt}
+
+
+  for f in func.funcs
+    _evalFunctionalDeriv_m(mesh, sbp, eqn, opts, f)
+  end
+
+  return nothing
+end
+
+
+function _evalFunctionalDeriv_q(mesh::AbstractDGMesh{Tmsh},
+                         sbp::AbstractOperator, eqn::AbstractSolutionData{Tsol}, opts,
+                         func::CompositeFunctional{Topt},
+                         func_deriv_arr::Abstract3DArray) where {Tmsh, Tsol, Topt}
+
+  func_deriv_arr2 = zeros(func_deriv_arr)
+  for f in func.funcs
+    _evalFunctionalDeriv_q(mesh, sbp, eqn, opts, f, func_deriv_arr2)
+    for i=1:length(func_deriv_arr)
+      func_deriv_arr[i] += func_deriv_arr2[i]
+    end
+    fill!(func_deriv_arr2, 0)
+  end
+
+  return nothing
 end
