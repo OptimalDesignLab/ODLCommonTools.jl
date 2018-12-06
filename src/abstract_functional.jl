@@ -236,7 +236,9 @@ struct CompositeFunctional{Topt} <: AbstractFunctional{Topt}
   function CompositeFunctional{Topt}(funcs::AbstractVector) where {Topt}
     pdata = getParallelData(funcs[1])
     for i=2:length(funcs)
-      @assert getParallelData(funcs[i]) == pdata
+      if getParallelData(funcs[i]) != PARALLEL_DATA_NONE
+        @assert getParallelData(funcs[i]) == pdata
+      end
     end
 
     return new(funcs)
