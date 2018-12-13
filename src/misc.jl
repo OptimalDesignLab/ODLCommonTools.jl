@@ -1109,6 +1109,24 @@ function split_fname(fname::AbstractString)
   return fstem, fext
 end
 
+
+"""
+  Returns true if the file name as an extesion, false otherwise
+
+  **Inputs**
+
+   * fname: AbstractString
+
+  **Outputs**
+
+   * Bool
+"""
+function hasExtension(fname::AbstractString)
+  fstem, fext = split_fname(fname)
+
+  return length(fext) > 0
+end
+
 """
   Wrapper around joinpath() that always returns an String.
 """

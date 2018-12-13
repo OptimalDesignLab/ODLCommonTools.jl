@@ -24,6 +24,7 @@ v0.1: stable version
 v0.2: new parallel constructs and read-only sview
 v0.3: tag before upgrading from Julia 0.4 to Julia 0.6
 v0.4: tag after upgrading to Julia 0.6
+v0.5: new AbstractFunctional API
 
 [![Build Status](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl.svg)](https://travis-ci.org/OptimalDesignLab/ODLCommonTools.jl)
 [![codecov.io](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl/coverage.svg?branch=master)](https://codecov.io/github/OptimalDesignLab/ODLCommonTools.jl?branch=master)

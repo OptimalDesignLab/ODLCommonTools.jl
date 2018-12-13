@@ -88,18 +88,24 @@ end
    * fname: file name, without extension.  Can be absolute or relative path.
             In parallel, the file name should *not* contain the MPI rank
             (this function will add it internally)
+   * qvec: `AbstractVector{Tsol}` to write, defaults to `eqn.q_vec`
 """
-function writeSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
-                            opts, fname::AbstractString)
+function writeSolutionFiles(mesh::AbstractMesh, sbp,
+                            eqn::AbstractSolutionData,
+                            opts, fname::AbstractString,
+                            qvec::AbstractVector=eqn.q_vec)
 
 
   # create parallel file name
   fname = get_parallel_fname(fname, mesh.myrank)
+
   # add extension
-  fname = string(fname, ".dat")
+  if !hasExtension(fname)
+    fname = string(fname, ".dat")
+  end
 
   # call write_binary
-  write_binary(fname, eqn.q_vec)
+  write_binary(fname, qvec)
  
   return nothing
 end
@@ -116,8 +122,12 @@ end
    * mesh: an AbstractMesh
    * sbp: an AbstractSBP
    * opts: options dictionary
-   * fname: file name, without extension.  Can be absolute or relative path.
+   * fname: file name, typically without extension.  If no extension, a
+            `.dat` extension will be added.
+            Can be absolute or relative path.
             In parallel, the file name should *not* contain the MPI rank
+   * qvec: `AbstractVector{Tsol}` to read the solution into, defaults to 
+           `eqn.q_vec`
 
   **Inputs/Outputs**
 
@@ -127,18 +137,22 @@ end
           these conditions are not met
    
 """
-function readSolutionFiles(mesh::AbstractMesh, sbp, eqn::AbstractSolutionData,
-                            opts, fname::AbstractString)
+function readSolutionFiles(mesh::AbstractMesh, sbp,
+                           eqn::AbstractSolutionData,
+                           opts, fname::AbstractString,
+                           qvec::AbstractVector=eqn.q_vec)
 
 
   # create parallel file name
   fname = get_parallel_fname(fname, mesh.myrank)
   
   # add extension
-  fname = string(fname, ".dat")
+  if !hasExtension(fname)
+    fname = string(fname, ".dat")
+  end
 
   # call write_binary
-  read_binary!(fname, eqn.q_vec)
+  read_binary!(fname, qvec)
 
   return nothing
 end
