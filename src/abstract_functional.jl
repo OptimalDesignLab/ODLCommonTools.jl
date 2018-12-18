@@ -280,11 +280,12 @@ end
 
 function _evalFunctionalDeriv_m(mesh::AbstractDGMesh{Tmsh},
                          sbp::AbstractOperator, eqn::AbstractSolutionData{Tsol}, opts,
-                         func::CompositeFunctional{Topt}) where {Tmsh, Tsol, Topt}
+                         func::CompositeFunctional{Topt},
+                         val_bar::Number=1) where {Tmsh, Tsol, Topt}
 
 
   for f in func.funcs
-    _evalFunctionalDeriv_m(mesh, sbp, eqn, opts, f)
+    _evalFunctionalDeriv_m(mesh, sbp, eqn, opts, f, val_bar)
   end
 
   return nothing
