@@ -93,6 +93,26 @@ end
 
 end  # end @eval
 
+
+"""
+  This function applies the permutation matrix specified by `ipiv` from 
+  `getrf`.  Use `laswp!` for the inverse permutation matrix.
+"""
+function applyIpiv!(ipiv::AbstractVector{I}, x::AbstractVector) where {I <: Integer}
+
+  @ifsafeview @assert length(x) == length(b)
+
+  # ipiv specifies the swaps to perform for the *inverse* permutation
+  # matrix.  Loop backwards to get piv, the non-inverse permutations.
+  for i=length(x):-1:1
+    destval = x[ipiv[i]]
+    x[ipiv[i]] = x[i]
+    x[i] = destval
+  end
+
+  return nothing
+end
+
 import Base.SparseArrays.UMFPACK: UmfpackLU, umf_ctrl, umf_info,
                                   UmfpackIndexTypes, umf_nm, UMFPACK_A,
                                   UMFPACK_At, UMFPACK_Aat, umferror

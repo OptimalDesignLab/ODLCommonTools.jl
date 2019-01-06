@@ -21,18 +21,21 @@ using Base.LinAlg.BLAS
   # test getrs2!
   # test A*x against P*L*U*x
 
-  A = [1.0 2 3; 4 5 6; 8 8 9]
-  x = [1, 2, 3]
-  b = A*x
-  b2 = zeros(b)
-  ipiv = zeros(BlasInt, 3)
-  getrf!(A,ipiv)
-  copy!(b2, x)
-  trmv!('U', 'N', 'N', A, b2)
-  trmv!('L', 'N', 'U', A, b2)
-  laswp!(b2, 1, length(b2), ipiv)
+  N = 30
+  for i=1:10
+    A = rand(N, N)
+    x = rand(N)
+    b = A*x
+    b2 = zeros(b)
+    ipiv = zeros(BlasInt, N)
+    getrf!(A,ipiv)
+    copy!(b2, x)
+    trmv!('U', 'N', 'N', A, b2)
+    trmv!('L', 'N', 'U', A, b2)
+    applyIpiv!(ipiv, b2)
 
-  @test isapprox( norm(b2 - b), 0.0) atol=1e-12
+    @test isapprox( norm(b2 - b), 0.0) atol=1e-12
+  end
 
   # test suitesparse solve
   A = [1.0 2 3; 4 5 6; 8 8 9]
