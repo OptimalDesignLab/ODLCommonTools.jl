@@ -100,7 +100,7 @@ end  # end @eval
 """
 function applyIpiv!(ipiv::AbstractVector{I}, x::AbstractVector) where {I <: Integer}
 
-  @ifsafeview @assert length(x) == length(b)
+  @ifsafeview @assert length(x) == length(ipiv)
 
   # ipiv specifies the swaps to perform for the *inverse* permutation
   # matrix.  Loop backwards to get piv, the non-inverse permutations.
