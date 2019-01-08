@@ -50,8 +50,8 @@ export prepend_path, append_path, split_fname
 export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 
 # lapack.jl
-export getrf!, getrs2!, BlasInt, laswp!, solve_suitesparse, UMFPACK_A,
-       UMFPACK_At, UMFPACK_Aat
+export getrf!, getrs2!, BlasInt, laswp!, applyIpiv!, solve_suitesparse,
+       UMFPACK_A, UMFPACK_At, UMFPACK_Aat
 
 export sview  # don't export this to make the change not completely breaking
 
