@@ -222,6 +222,13 @@ global const VISCOUS=2
 global const COLORING=3
 
 """
+  disc_type constant for sparsity pattern of viscous terms when the T4 = 0.
+  In this case, all nodes in the stencil of the interpolation operator are
+  connected to all nodes of the adjacent element.
+"""
+global const VISCOUSTIGHT
+
+"""
   Construct a SparseMatrixCSC using the exact sparsity pattern, taking into
   account the type of SBP face operator.
 
@@ -380,6 +387,54 @@ function SparseMatrixCSC(mesh::AbstractDGMesh, ::Type{Tv}, disc_type::Integer, f
         end  # end loop k
       end  # end loop j
 
+    elseif disc_type == VISCOUSTIGHT
+      # connect nodes on perm of elementL to all volume nodes of elementR
+      
+      # do permL to all of R
+      for j=1:length(permL)
+        dofL = mesh.dofs[k, permL[j], iface_i.elementL]
+        dofR = mesh.dofs[k, permR[j], iface_i.elementR]
+        idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+        idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+        rowval_rangeL = sview(rowval, idx_rangeL)
+        rowval_rangeR = sview(rowval, idx_rangeR)
+
+        idxL = getStartIdx(rowval_rangeL)
+        idxR = getStartIdx(rowval_rangeR)
+        for p=1:mesh.numNodesPerElement
+          for k=1:mesh.numDofPerNode
+            rowval_rangeL[idxL] = mesh.dofs[k, p, iface_i.elementR]
+            idxL += 1
+            rowval_rangeR[idxR] = mesh.dofs[k, p, iface_i.elementL]
+            idxR += 1
+          end
+        end
+      end
+
+      #TODO: need nonstencil
+      # do nonstencilL to permR
+      for j=1:length(nonstencilL)
+        dofL = mesh.dofs[k, nonstencilL[j], iface_i.elementL]
+        dofR = mesh.dofs[k, nonstencilR[j], iface_i.elementR]
+        idx_rangeL = colptr[dofL]:(colptr[dofL+1]-1)
+        idx_rangeR = colptr[dofR]:(colptr[dofR+1]-1)
+        rowval_rangeL = sview(rowval, idx_rangeL)
+        rowval_rangeR = sview(rowval, idx_rangeR)
+
+        idxL = getStartIdx(rowval_rangeL)
+        idxR = getStartIdx(rowval_rangeR)
+
+        for p=1:length(permR)
+          for k=1:mesh.numDofPerNode
+            rowval_rangeL[idxL] = mesh.dofs[k, permR[p], iface_i.elementR]
+            idxL += 1
+            rowval_rangeR[idxR] = mesh.dofs[k, permL[p], iface_i.elementL]
+            idxR += 1
+          end
+        end
+      end
+
+
     else  # disc_type = COLORING
       for j=1:mesh.numNodesPerElement
         for k=1:mesh.numDofPerNode
@@ -531,6 +586,21 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
         dnnz[block_nodeR] += length(permL)
       end  # end loop j
 
+    elseif disc_type == VISCOUSTIGHT
+      # when T4=0, the important terms are R^T * T3 * D*u and D^T * T2*R*u
+      
+      for j=1:length(permL)
+        dofL = mesh.dofs[1, permL[j], iface_i.elementL]
+        dofR = mesh.dofs[1, permR[j], iface_i.elementR]
+        block_nodeL = div(dofL - 1, bs) + 1
+        block_nodeR = div(dofR - 1, bs) + 1
+
+        dnnz[block_nodeL] += mesh.numNodesPerElement
+        dnnz[block_nodeR] += mesh.numNodesPerElement
+      end
+
+
+
     else  # disc_type == COLORING
       # all volume nodes to all volume nodes
       for j=1:mesh.numNodesPerElement
@@ -576,6 +646,13 @@ function getBlockSparsityCounts(mesh::AbstractDGMesh, sbpface,
           block_nodeL = div(dofL - 1, bs) + 1
 
           onnz[block_nodeL] += length(permR)
+        end
+
+      elseif disc_type == VISCOUSTIGHT
+        for j=1:length(permL)
+          dofL = mesh.dofs[1, permL[j], iface_i.elementL]
+          block_nodeL = div(dofL - 1, bs) + 1
+          onnz[block_nodeL] += mesh.numNodesPerElement
         end
 
       else
