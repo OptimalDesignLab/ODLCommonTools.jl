@@ -29,9 +29,6 @@ export BCType, BCType_revm, BCType_revq, SRCType, FluxType, FluxType_revm,
 export calcDiffElementArea
 export functorThatErrors, functorThatErrors_revm
 
-# sparse.jl
-export getBlockSparsityCounts, INVISCID, VISCOUS, COLORING
-
 # topo.jl
 export ElementTopology3, ElementTopology2, ElementTopology
 
@@ -514,7 +511,6 @@ end
 
 include("types.jl")
 include("abstract_functional.jl")
-include("sparse.jl")
 include("eqn_deepcopy.jl")
 include("ro_view.jl")
 include("io.jl")
