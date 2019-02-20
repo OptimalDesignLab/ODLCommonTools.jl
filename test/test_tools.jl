@@ -301,7 +301,6 @@ end
   # A = d1 x d2, x = d2, b = d1
   for d1=1:20
     for d2=1:20
-
       # mat-vec
       A = rand(d1, d2)
       x = rand(d2)
@@ -313,11 +312,9 @@ end
       b5 = 2*A*x + 3*b4
       smallmatvec_kernel!(A, x, b4, 2, 3)
 
-
       @test normLinf(b - b2) < 1e-13
       @test normLinf(b - b3) < 1e-13
       @test normLinf(b4 - b5) < 1e-13
-
 
       # matT-vec
       A = rand(d2, d1)
@@ -333,6 +330,7 @@ end
       @test normLinf(b - b2) < 1e-13
       @test normLinf(b - b3) < 1e-13
       @test normLinf(b4 - b5) < 1e-13
+
     end
   end
 
@@ -424,30 +422,6 @@ end
   make_symmetric!(A)
   @test ( isSymmetric(A, eps()) )== true
 
-
-  # test fastfind
-  A = rand(Int, 999)
-  sort!(A)
-  for i=1:length(A)
-    idx = ODLCommonTools.fastfind(A, A[i])
-    @test ( idx )== i
-  end
-
-  A = rand(Int, 1000)
-  sort!(A)
-  for i=1:length(A)
-    idx = ODLCommonTools.fastfind(A, A[i])
-    @test ( idx )== i
-  end
-
-
-  A = collect(1:10)
-  idx = ODLCommonTools.fastfind(A, 11)
-  @test ( idx )== 0
-
-  A = collect(1:2)
-  idx = ODLCommonTools.fastfind(A, 2)
-  @test ( idx )== 2
 
 
   # test topology type

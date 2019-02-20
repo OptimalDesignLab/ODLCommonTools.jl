@@ -211,7 +211,7 @@ end
 function smallmatvec(A::AbstractArray{T,2}, x::AbstractArray{T2, 1}) where {T, T2}
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array{T3}(m)
+  b =zeros(T3, m)
   smallmatvec!(A, x, b)
 end
 
@@ -286,7 +286,7 @@ function smallmatTvec(A::AbstractArray{T, 2}, x::AbstractArray{T2, 1}) where {T,
 
   (m,n) = size(A)
   T3 = promote_type(T, T2)
-  b = Array{T3}(n)
+  b = zeros(T3, n)
   smallmatTvec!(A, x, b)
 end
 
