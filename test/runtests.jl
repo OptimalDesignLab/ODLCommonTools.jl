@@ -50,6 +50,6 @@ include("test_copy.jl")
 include("test_roview.jl")
 include("test_io.jl")
 include("test_lapack.jl")
-
+include("test_null_array.jl")
 
 #FactCheck.exitstatus()

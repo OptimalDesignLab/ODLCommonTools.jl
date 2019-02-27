@@ -50,7 +50,10 @@ export write_binary, read_binary!, writeSolutionFiles, readSolutionFiles
 export getrf!, getrs2!, BlasInt, laswp!, applyIpiv!, solve_suitesparse,
        UMFPACK_A, UMFPACK_At, UMFPACK_Aat
 
-export sview  # don't export this to make the change not completely breaking
+export sview
+
+# null_array.jl
+export NullArray
 
 """
 
@@ -517,4 +520,5 @@ include("io.jl")
 include("misc.jl")
 include("getAllTypeParams.jl")
 include("lapack.jl")
+include("null_array.jl")
 end     # module
