@@ -55,6 +55,9 @@ export sview
 # null_array.jl
 export NullArray
 
+# empty_array.jl
+export EmptyArray
+
 """
 
   This abstract type is the supertype for all the objects that store the 
@@ -521,4 +524,5 @@ include("misc.jl")
 include("getAllTypeParams.jl")
 include("lapack.jl")
 include("null_array.jl")
+include("empty_array.jl")
 end     # module
