@@ -1,7 +1,7 @@
 # an (stack-allocatable) array for which setindex and getindex are no-ops
 # This is useful for unneeded outputs
 
-import Base: size, getindex, setindex!
+import Base: size, getindex, setindex!, IndexStyle
 
 """
   Special array type that errors if indexed.  
@@ -24,6 +24,7 @@ struct EmptyArray{T, N} <: DenseArray{T, N}
   end
 end
 
+IndexStyle(::EmptyArray) = IndexLinear()
 size(A::EmptyArray) = A.dims
 
 function getindex(A::EmptyArray{T}, i::Int) where {T}
