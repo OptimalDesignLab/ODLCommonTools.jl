@@ -147,6 +147,20 @@ the data needed for parallel communication
 abstract type AbstractSharedFaceData{Tsol} end
 
 
+
+function show(io::IO, obj::AbstractMesh)
+  println(io, "$(typeof(obj)) with $(obj.numEl) p = $(obj.order) elements")
+end
+
+function show(io::IO, obj::AbstractSolutionData)
+  println(io, "$(typeof(obj)) with $(size(obj.q, 3)) elements")
+end
+
+function show(io::IO, obj::AbstractOperator)
+  println(io, "degree $(obj.degree) $(typeof(obj))")
+end
+
+
 """
 
   Copies only the essential data from one AbstractSolutionData to another.
