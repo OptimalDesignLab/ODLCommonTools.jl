@@ -12,7 +12,7 @@ export rmfile, printbacktrace, smallmatvec!, smallmatvec, smallmatTvec!,
         checkZeroColumns, checkIdenticalColumns, checkSparseColumns,
         checkSparseRows, findLarge, isSymmetric, make_symmetric!,
         getBranchName, getTimeString, isFieldDefined, get_parallel_fname,
-        joinpath_ascii
+        hasExtension, joinpath_ascii
 
 @doc """
  ### Tools rmfile
